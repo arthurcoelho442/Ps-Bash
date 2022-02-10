@@ -62,7 +62,6 @@ void type_prompt(){
 int main(int argc, char **argv){
     char cmd[100], *command[100], *parameters[20];
     char *envp[]={(char*) "PATH=/bin", 0};
-    int vacinado = 0;
     int qtdCommand;
     
     while(1){
@@ -75,8 +74,8 @@ int main(int argc, char **argv){
             if(fork()!=0)
                 wait(NULL);
             else{
-                //if(vacinado)
-                //  setpgid(0,0); //não vacinado
+                if(i == 1)//não vacinado
+                  setpgid(0,0); 
                 strcpy(cmd, "/bin/");
                 strcat(cmd, command[i]);
                 execvp(cmd, parameters);
