@@ -76,7 +76,7 @@ int main(int argc, char **argv){
                 wait(NULL);
             }
             else{
-                if(qtdCommand == 1){ //não vacinado; intigamente i==1
+                if(qtdCommand == 1){ 
                 setpgid(0,0);
                 printf("%d e %d processo não vacinado\n", (int)getpid(), (int)getppid());
                 }
