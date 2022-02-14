@@ -4,28 +4,49 @@
 #include<unistd.h>
 #include<string.h>
 
-void read_command(char cmd[], char *par[]){
-    char line[1024];
-    int count =0, i=0, j=0;
-    char *array[100], *pch;
+int read_command(char *cmd[100]){
+    char linha[1024];
+    char *tok;
+    int count =0, i=0;
 
+    //Pega a linha digitada
     for(;;){
         int c = fgetc(stdin);
-        line[count++] = (char) c;
+        linha[count++] = (char) c;
         if( c == '\n' ) break;
     }
-    if(count == 1) return;
-    pch = strtok(line, "\n");
-
-    while(pch != NULL){
-        array[i++] = strdup(pch);
-        pch = strtok (NULL, "\n");
+    
+    //retorna caso não haja comandos
+    if(count == 1) 
+        return 0;
+    
+    //Divide os comandos caso seja executado mais de um
+    tok = strtok(linha, ";");
+    while(tok){
+        cmd[i++] = strdup(tok);
+        tok = strtok (NULL, ";");
     }
-    strcpy(cmd, array[0]);
+    
+    return i;
+}
 
-    for(int j=0; j<i; j++)
-        par[j] = array [j];
-    par[i] = NULL;
+void treatment_command(char cmd[100], char *par[100]){
+    int i = 0;
+    char *array[100];
+    char *tok = strtok(cmd, " \n");
+    
+    while(tok){
+        array[i++] = strdup(tok);
+        tok = strtok (NULL, " \n");
+    }
+    
+    strcpy(cmd, array[0]);
+    
+    if(i>1){
+    for(int j=0; j < i-1; j++)
+        par[j] = array[j+1]; 
+    par[i-1] = NULL;
+    }
 }
 
 void type_prompt(){
@@ -39,19 +60,36 @@ void type_prompt(){
 }
 
 int main(int argc, char **argv){
-    char cmd[100], command[100], *parameters[20];
+    char cmd[100], *command[100], *parameters[20];
     char *envp[]={(char*) "PATH=/bin", 0};
+    int qtdCommand;
+    
     while(1){
         type_prompt();
-        read_command(command, parameters);
-        if(fork()!=0)
-            wait(NULL);
-        else{
-            strcpy(cmd, "/bin/");
-            strcat(cmd, command);
-            execve(cmd, parameters, envp);
+        qtdCommand = read_command(command);
+
+        for(int i=0; i<qtdCommand; i++){
+            treatment_command(command[i], parameters);
+            printf("valor de i:%d\n", i);
+            if(fork()!=0){
+                printf("entrou aki, %d\n", (int)getpid());
+                wait(NULL);
+            }
+            else{
+                if(qtdCommand == 1){ //não vacinado; intigamente i==1
+                setpgid(0,0);
+                printf("%d e %d processo não vacinado\n", (int)getpid(), (int)getppid());
+                }
+                /*if(i>1){   // vacinados
+                    for(int j=0; j<i; j++)
+                        if(pid != 0) fork();*/
+
+                strcpy(cmd, "/bin/");
+                strcat(cmd, command[i]);
+                execvp(cmd, parameters);
+            }
+            if(strcmp(command[i], "term")==0) return 0;
         }
-        if(strcmp(command, "exit") == 0) break;
     }
     return EXIT_SUCCESS;
 }
