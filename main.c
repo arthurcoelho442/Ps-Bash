@@ -30,24 +30,24 @@ int read_command(char *cmd[100]){
     return i;
 }
 
-void treatment_command(char cmd[100], char *par[100]){ 
+void treatment_command(char cmd[], char *par[]){ 
     int i = 0;
     char *array[100];
-    char *tok = strtok(cmd, " \n");
+    char *tok;
     
-    while(tok){
+    if(cmd[strlen(cmd)-1] == '\n')
+        cmd[strlen(cmd)-1] = '\0';
+    
+    tok = strtok(cmd, " ");
+    while(tok != NULL){
         array[i++] = strdup(tok);
-        tok = strtok (NULL, " \n");
+        tok = strtok (NULL, " ");
     }
     
     strcpy(cmd, array[0]);
-    //strcat(cmd, " &");
-    
-    if(i>1){
-        for(int j=0; j < i-1; j++)
-            par[j] = array[j+1]; 
-        par[i-1] = NULL;
-    }
+    for(int j=0; j < i; j++)
+        par[j] = array[j]; 
+    par[i] = NULL;
 }
 
 void type_prompt(){
@@ -61,7 +61,7 @@ void type_prompt(){
 }
 
 int main(int argc, char **argv){
-    char cmd[100], *command[100], *parameters[20];
+    char cmd[100], *command[100], *parameters[100];
     char *envp[]={(char*) "PATH=/bin", 0};
     int qtdCommand;
     pid_t pid;
@@ -72,17 +72,16 @@ int main(int argc, char **argv){
         
         for(int i=0; i<qtdCommand; i++){
             treatment_command(command[i], parameters);
-            
             if(pid = fork()!=0){
-                printf("\nGPP = %d\n", getpgid(pid));
+                //printf("\nGPP = %d\n", getpgid(pid));
                 wait(NULL);
             }
             else{
                 if(qtdCommand == 1)//não vacinado
                     setpgid(0,0); 
-                printf("\nGPF = %d\n", getpgid(pid));
+                //printf("\nGPF = %d\n", getpgid(pid));
                 strcpy(cmd, "/bin/");
-                strcat(cmd, command[i]);
+                strcpy(cmd, command[i]);
                 execvp(cmd, parameters);
             }
             if(strcmp(command[i], "exit")==0) return 0;
