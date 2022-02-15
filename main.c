@@ -30,7 +30,7 @@ int read_command(char *cmd[100]){
     return i;
 }
 
-void treatment_command(char cmd[100], char *par[100]){
+void treatment_command(char cmd[100], char *par[100]){ 
     int i = 0;
     char *array[100];
     char *tok = strtok(cmd, " \n");
@@ -41,11 +41,12 @@ void treatment_command(char cmd[100], char *par[100]){
     }
     
     strcpy(cmd, array[0]);
+    //strcat(cmd, " &");
     
     if(i>1){
-    for(int j=0; j < i-1; j++)
-        par[j] = array[j+1]; 
-    par[i-1] = NULL;
+        for(int j=0; j < i-1; j++)
+            par[j] = array[j+1]; 
+        par[i-1] = NULL;
     }
 }
 
@@ -63,6 +64,7 @@ int main(int argc, char **argv){
     char cmd[100], *command[100], *parameters[20];
     char *envp[]={(char*) "PATH=/bin", 0};
     int qtdCommand;
+    pid_t pid;
     
     while(1){
         type_prompt();
@@ -71,11 +73,14 @@ int main(int argc, char **argv){
         for(int i=0; i<qtdCommand; i++){
             treatment_command(command[i], parameters);
             
-            if(fork()!=0)
+            if(pid = fork()!=0){
+                printf("\nGPP = %d\n", getpgid(pid));
                 wait(NULL);
+            }
             else{
-                if(i == 1)//não vacinado
-                  setpgid(0,0); 
+                if(qtdCommand == 1)//não vacinado
+                    setpgid(0,0); 
+                printf("\nGPF = %d\n", getpgid(pid));
                 strcpy(cmd, "/bin/");
                 strcat(cmd, command[i]);
                 execvp(cmd, parameters);
