@@ -1,95 +1,113 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<sys/wait.h>
-#include<unistd.h>
-#include<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <string.h>
 
-int read_command(char *cmd[100]){
+int read_command(char *cmd[100])
+{
     char linha[1024];
     char *tok;
-    int count =0, i=0;
+    int count = 0, i = 0;
 
-    //Pega a linha digitada
-    for(;;){
+    // Pega a linha digitada
+    for (;;)
+    {
         int c = fgetc(stdin);
-        linha[count++] = (char) c;
-        if( c == '\n' ) break;
+        linha[count++] = (char)c;
+        if (c == '\n')
+            break;
     }
-    
-    //retorna caso não haja comandos
-    if(count == 1) 
+
+    // retorna caso não haja comandos
+    if (count == 1)
         return 0;
-    
-    //Divide os comandos caso seja executado mais de um
+
+    // Divide os comandos caso seja executado mais de um
     tok = strtok(linha, ";");
-    while(tok){
+    while (tok)
+    {
         cmd[i++] = strdup(tok);
-        tok = strtok (NULL, ";");
+        tok = strtok(NULL, ";");
     }
-    
+
     return i;
 }
 
-void treatment_command(char cmd[100], char *par[100]){
+void treatment_command(char cmd[100], char *par[100])
+{
     int i = 0;
     char *array[100];
     char *tok = strtok(cmd, " \n");
-    
-    while(tok){
+
+    while (tok)
+    {
         array[i++] = strdup(tok);
-        tok = strtok (NULL, " \n");
+        tok = strtok(NULL, " \n");
     }
-    
+
     strcpy(cmd, array[0]);
-    
-    if(i>1){
-    for(int j=0; j < i-1; j++)
-        par[j] = array[j+1]; 
-    par[i-1] = NULL;
+
+    if (i > 1)
+    {
+        for (int j = 0; j < i - 1; j++)
+            par[j] = array[j + 1];
+        par[i - 1] = NULL;
     }
 }
 
-void type_prompt(){
+void type_prompt()
+{
     static int first_time = 1;
-    if(first_time){
-        const char* CLEAR_SCREEN_ANSI =" \e[1;1H\e[2J";
-        write(STDOUT_FILENO,CLEAR_SCREEN_ANSI, 12);
-        first_time=0;
+    if (first_time)
+    {
+        const char *CLEAR_SCREEN_ANSI = " \e[1;1H\e[2J";
+        write(STDOUT_FILENO, CLEAR_SCREEN_ANSI, 12);
+        first_time = 0;
     }
     printf("psh>");
 }
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
     char cmd[100], *command[100], *parameters[20];
-    char *envp[]={(char*) "PATH=/bin", 0};
+    char *envp[] = {(char *)"PATH=/bin", 0};
     int qtdCommand;
-    
-    while(1){
+
+    while (1)
+    {
         type_prompt();
         qtdCommand = read_command(command);
 
-        for(int i=0; i<qtdCommand; i++){
+        for (int i = 0; i < qtdCommand; i++)
+        {
             treatment_command(command[i], parameters);
-            printf("valor de i:%d\n", i);
-            if(fork()!=0){
-                printf("entrou aki, %d\n", (int)getpid());
+            int pid;
+            if (pid = fork() != 0)
+            {
+
                 wait(NULL);
             }
-            else{
-                if(qtdCommand == 1){ 
-                setpgid(0,0);
-                printf("%d e %d processo não vacinado\n", (int)getpid(), (int)getppid());
+            else
+            {
+                if (i == 0)
+                { // criar um processo que pode ser não vacidado ou o pai dos vacinados
+                    setpgid(0, 0);
                 }
-                /*if(i>1){   // vacinados
-                    for(int j=0; j<i; j++)
-                        if(pid != 0) fork();*/
+                if (i > 0)
+                { // filhos vacinados
+                    for (int j = 0; j < i; j++)
+                        if (pid != 0)
+                            fork();
 
-                strcpy(cmd, "/bin/");
-                strcat(cmd, command[i]);
-                execvp(cmd, parameters);
+                    strcpy(cmd, "/bin/");
+                    strcat(cmd, command[i]);
+                    execvp(cmd, parameters);
+                }
+                if (strcmp(command[i], "term") == 0)
+                    return 0;
             }
-            if(strcmp(command[i], "term")==0) return 0;
         }
+        return EXIT_SUCCESS;
     }
-    return EXIT_SUCCESS;
 }

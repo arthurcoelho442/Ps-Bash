@@ -47,7 +47,7 @@ int main(void)
 	else if(f == 0) /* child */
 	{
 		processInfo("child1");
-		sleep(50);
+		sleep(20);
 		printf("child1 exiting\n");
 		exit(EXIT_SUCCESS);
 	}
@@ -58,7 +58,7 @@ int main(void)
 	else if(f == 0) /* child */
 	{
 		processInfo("child2");
-		sleep(50);
+		sleep(20);
 		printf("child2 exiting\n");
 		exit(EXIT_SUCCESS);
 	}
@@ -83,7 +83,7 @@ int main(void)
 		else if(f == 0) /* child */
 		{
 			processInfo("child3-1");
-			sleep(60);
+			sleep(10);
 			printf("child3-1 exiting\n");
 			exit(EXIT_SUCCESS);
 		}
@@ -94,7 +94,7 @@ int main(void)
 		else if(f == 0) /* child */
 		{
 			processInfo("child3-2");
-			sleep(60);
+			sleep(10);
 			printf("child3-2 exiting\n");
 			exit(EXIT_SUCCESS);
 		}
