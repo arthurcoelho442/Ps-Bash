@@ -47,12 +47,12 @@ void treatment_command(char cmd[100], char *par[100])
     }
 
     strcpy(cmd, array[0]);
-
-    if (i > 1)
-    {
-        for (int j = 0; j < i - 1; j++)
-            par[j] = array[j + 1];
-        par[i - 1] = NULL;
+    //strcat(cmd, " &");
+    
+    if(i>1){
+        for(int j=0; j < i-1; j++)
+            par[j] = array[j+1]; 
+        par[i-1] = NULL;
     }
 }
 
