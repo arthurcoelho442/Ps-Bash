@@ -4,6 +4,19 @@
 #include <unistd.h>
 #include <string.h>
 
+void processInfo(char *msg)
+{
+    pid_t pgid = getpgid(getpid());
+    if (pgid == -1)
+        perror("getpgid error:");
+    pid_t sid = getsid(0);
+    if (sid == -1)
+        perror("getsid error:");
+
+    printf("%s: This is %d in session %d (created from %d); pgid=%d\n",
+           msg, getpid(), sid, getppid(), pgid);
+}
+
 int read_command(char *cmd[100])
 {
     char linha[1024];
@@ -47,12 +60,13 @@ void treatment_command(char cmd[100], char *par[100])
     }
 
     strcpy(cmd, array[0]);
-    //strcat(cmd, " &");
-    
-    if(i>1){
-        for(int j=0; j < i-1; j++)
-            par[j] = array[j+1]; 
-        par[i-1] = NULL;
+    // strcat(cmd, " &");
+
+    if (i > 1)
+    {
+        for (int j = 0; j < i - 1; j++)
+            par[j] = array[j + 1];
+        par[i - 1] = NULL;
     }
 }
 
@@ -73,41 +87,71 @@ int main(int argc, char **argv)
     char cmd[100], *command[100], *parameters[20];
     char *envp[] = {(char *)"PATH=/bin", 0};
     int qtdCommand;
+    pid_t pid;
 
     while (1)
     {
         type_prompt();
         qtdCommand = read_command(command);
-
-        for (int i = 0; i < qtdCommand; i++)
-        {
-            treatment_command(command[i], parameters);
-            int pid;
+        if (qtdCommand == 1)
+        { // não vacinado
+            printf("não vacinado\n");
+            treatment_command(command[0], parameters);
             if (pid = fork() != 0)
             {
-
+                processInfo("Deus");
                 wait(NULL);
             }
             else
             {
-                if (i == 0)
-                { // criar um processo que pode ser não vacidado ou o pai dos vacinados
-                    setpgid(0, 0);
-                }
-                if (i > 0)
-                { // filhos vacinados
-                    for (int j = 0; j < i; j++)
-                        if (pid != 0)
-                            fork();
-
-                    strcpy(cmd, "/bin/");
-                    strcat(cmd, command[i]);
-                    execvp(cmd, parameters);
-                }
-                if (strcmp(command[i], "term") == 0)
-                    return 0;
+                printf("comando:%s\n", command[0]);
+                processInfo("filho");
+                setpgid(0, 0);
+                strcpy(cmd, "/bin/");
+                strcpy(cmd, command[0]);
+                execvp(cmd, parameters);
+                return 0;
             }
         }
-        return EXIT_SUCCESS;
+        else if (qtdCommand > 1)
+        { // vacinados
+            printf("vacinado\n");
+            if (pid = fork() != 0)
+            {
+                processInfo("Deus");
+                wait(NULL);
+            }
+            else
+            {
+                setpgid(0, 0); // pai
+                processInfo("pai");
+                int j;
+                for (j = 1; j < qtdCommand; j++)
+                {
+                     treatment_command(command[j], parameters);
+                    pid = fork();
+                    if (pid == 0)
+                    { // filho
+                    printf("comando:%s\n", command[j]);
+                        processInfo("filho");
+                        strcpy(cmd, "/bin/");
+                        strcpy(cmd, command[j]);
+                        
+                        execvp(cmd, parameters);
+                        return 0;
+                    }
+                }
+                treatment_command(command[0], parameters);
+                strcpy(cmd, "/bin/");
+                strcpy(cmd, command[0]);
+                /*printf("paiii\n");
+                execvp(cmd, parameters);*/
+            
+                wait(NULL);
+            }
+        }
+        if (strcmp(command[0], "exit") == 0)
+            return 0;
     }
+    return EXIT_SUCCESS;
 }
