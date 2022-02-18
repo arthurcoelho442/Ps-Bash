@@ -4,6 +4,19 @@
 #include<unistd.h>
 #include<string.h>
 
+void processInfo(char *msg)
+{
+	pid_t pgid = getpgid(getpid());
+	if(pgid == -1)
+		perror("getpgid error:");
+	pid_t sid = getsid(0);
+	if(sid == -1)
+		perror("getsid error:");
+
+	printf("%s: This is %d in session %d (created from %d); pgid=%d\n",
+	       msg, getpid(), sid, getppid(), pgid);
+}
+
 int read_command(char *cmd[100]){
     char linha[1024];
     char *tok;
@@ -30,7 +43,7 @@ int read_command(char *cmd[100]){
     return i;
 }
 
-void treatment_command(char cmd[100], char *par[100]){
+void treatment_command(char cmd[100], char *par[100]){ 
     int i = 0;
     char *array[100];
     char *tok = strtok(cmd, " \n");
@@ -41,11 +54,12 @@ void treatment_command(char cmd[100], char *par[100]){
     }
     
     strcpy(cmd, array[0]);
+    //strcat(cmd, " &");
     
     if(i>1){
-    for(int j=0; j < i-1; j++)
-        par[j] = array[j+1]; 
-    par[i-1] = NULL;
+        for(int j=0; j < i-1; j++)
+            par[j] = array[j+1]; 
+        par[i-1] = NULL;
     }
 }
 
@@ -63,33 +77,58 @@ int main(int argc, char **argv){
     char cmd[100], *command[100], *parameters[20];
     char *envp[]={(char*) "PATH=/bin", 0};
     int qtdCommand;
+    pid_t pid;
     
     while(1){
         type_prompt();
         qtdCommand = read_command(command);
-
-        for(int i=0; i<qtdCommand; i++){
-            treatment_command(command[i], parameters);
-            printf("valor de i:%d\n", i);
-            if(fork()!=0){
-                printf("entrou aki, %d\n", (int)getpid());
+        treatment_command(command[0], parameters);
+        printf("%s\n", command[0]);
+        if(strcmp(command[0], "exit\n")==0) {
+            printf("Aki\n");
+            break;
+        }
+        if(qtdCommand == 1){//não vacinado
+            if(pid = fork()!=0){
+                processInfo("não vacinado");
                 wait(NULL);
-            }
-            else{
-                if(qtdCommand == 1){ 
-                setpgid(0,0);
-                printf("%d e %d processo não vacinado\n", (int)getpid(), (int)getppid());
-                }
-                /*if(i>1){   // vacinados
-                    for(int j=0; j<i; j++)
-                        if(pid != 0) fork();*/
-
+            }else setpgid(0,0);
+            strcpy(cmd, "/bin/");
+            strcat(cmd, command[0]);
+            execvp(cmd, parameters);
+        }else{
+            for(int i=0; i<qtdCommand; i++){ //vacinados
+                if(pid = fork()!=0){
+                    processInfo("vacinado pai");
+                    wait(NULL);
+                }else processInfo("vacinado filho");
+                if(i == 0)
+                    setpgid(0,0);
+                if(pid==0)processInfo("vacinado filho");
+                else processInfo("vacinado pai");
                 strcpy(cmd, "/bin/");
                 strcat(cmd, command[i]);
                 execvp(cmd, parameters);
             }
-            if(strcmp(command[i], "term")==0) return 0;
+            if(strcmp(command[0], "exit")==0) return 0;
         }
+        /*for(int i=0; i<qtdCommand; i++){
+            treatment_command(command[i], parameters);
+            
+            if(pid = fork()!=0){
+                printf("\nGPP = %d\n", getpgid(pid));
+                wait(NULL);
+            }
+            else{
+                if(qtdCommand == 1)//não vacinado
+                    setpgid(0,0); 
+                printf("\nGPF = %d\n", getpgid(pid));
+                strcpy(cmd, "/bin/");
+                strcat(cmd, command[i]);
+                execvp(cmd, parameters);
+            }
+            if(strcmp(command[i], "exit")==0) return 0;
+        }*/
     }
     return EXIT_SUCCESS;
 }
