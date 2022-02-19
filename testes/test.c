@@ -42,6 +42,7 @@ int main(void)
 	// Start two child processes which sleep for 4 seconds and then
 	// exit.
 	int f = fork();
+	printf("asdasdsadadas: %d\n", getpid());
 	if(f < 0)
 		perror("fork error:");
 	else if(f == 0) /* child */
