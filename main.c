@@ -22,14 +22,15 @@ int main(int argc, char **argv)
         { // não vacinado
             if (pid = fork() != 0)
             {
-                processInfo("Main");
-                wait(NULL);
+                //processInfo("Main");
+                int status;
+                waitpid(-1, &status, WNOHANG);  //BACKGROUND
             }
             else
             {
                 int qtdPar=treatment_command(command[0], parameters);
                 setpgid(0, 0);
-                processInfo("filho");
+                //processInfo("filho");
                 strcpy(cmd, command[0]);
                 int status=execvp(cmd, parameters);
                 if(status == 1) printf("Erro, comando ou parametro errado");
@@ -41,13 +42,14 @@ int main(int argc, char **argv)
         { // vacinados
             if (pid = fork() != 0)
             {
-                processInfo("Deus");
-                wait(NULL);
+                //processInfo("Deus");
+                int status;
+                waitpid(-1, &status, WNOHANG);  //BACKGROUND
             }
             else
             {
                 setpgid(0, 0); // pai
-                processInfo("pai");
+                //processInfo("pai");
                 int j;
                 for (j = 1; j < qtdCommand; j++)
                 {
@@ -55,7 +57,7 @@ int main(int argc, char **argv)
                     if (pid == 0)
                     { // filho
                         int qtdPar=treatment_command(command[j], parameters);
-                        processInfo("filho");
+                        ///processInfo("filho");
                         strcpy(cmd, command[j]);
                         int status=execvp(cmd, parameters);
                         if(status == 1) printf("Erro, comando ou parametro errado");
