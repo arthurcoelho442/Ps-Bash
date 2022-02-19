@@ -72,13 +72,13 @@ int main(int argc, char **argv){
         for(int i=0; i<qtdCommand; i++){
             treatment_command(command[i], parameters);
             pid = fork();
-             if(pid!=0){
+            if(pid!=0){
                 //printf("\nGPP = %d\n", getpgid(pid));
                 int status;
                 waitpid(-1, &status, WNOHANG);      // Roda os comandos em Background e mata filhos zumbis
             } else {
-                if(qtdCommand == 1)//não vacinado
-                    setpgid(0,0); 
+                if(qtdCommand == 1) //não vacinado              //MUDAR GPID DOS PROCESSOS VACINADOS
+                    setpgid(0,0);
                 //printf("\nGPF = %d\n", getpgid(pid));
                 strcpy(cmd, "/bin/");
                 strcpy(cmd, command[i]);
