@@ -28,6 +28,7 @@ int main(int argc, char **argv)
         if (qtdCommand == 1){ // não vacinado
             if (pid = fork() != 0){
                 processInfo("Main");
+                int status;
                 waitpid(-1, &status, WNOHANG);  //BACKGROUND
             }
             else{
