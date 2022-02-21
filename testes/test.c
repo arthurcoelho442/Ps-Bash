@@ -42,12 +42,13 @@ int main(void)
 	// Start two child processes which sleep for 4 seconds and then
 	// exit.
 	int f = fork();
+	printf("asdasdsadadas: %d\n", getpid());
 	if(f < 0)
 		perror("fork error:");
 	else if(f == 0) /* child */
 	{
 		processInfo("child1");
-		sleep(50);
+		sleep(20);
 		printf("child1 exiting\n");
 		exit(EXIT_SUCCESS);
 	}
@@ -58,7 +59,7 @@ int main(void)
 	else if(f == 0) /* child */
 	{
 		processInfo("child2");
-		sleep(50);
+		sleep(20);
 		printf("child2 exiting\n");
 		exit(EXIT_SUCCESS);
 	}
@@ -83,7 +84,7 @@ int main(void)
 		else if(f == 0) /* child */
 		{
 			processInfo("child3-1");
-			sleep(60);
+			sleep(10);
 			printf("child3-1 exiting\n");
 			exit(EXIT_SUCCESS);
 		}
@@ -94,7 +95,7 @@ int main(void)
 		else if(f == 0) /* child */
 		{
 			processInfo("child3-2");
-			sleep(60);
+			sleep(10);
 			printf("child3-2 exiting\n");
 			exit(EXIT_SUCCESS);
 		}
