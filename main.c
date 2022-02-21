@@ -23,19 +23,14 @@ int main(int argc, char **argv)
     while(1){
         type_prompt();
         qtdCommand = read_command(command);
-        if(strcmp(command[0], "term") == 0 && qtdCommand == 1){
-            free(command[0]);
+        if(strcmp(command[0], "term") == 0 && qtdCommand == 1)
             exit(EXIT_SUCCESS);
-        }
-        if (qtdCommand == 1)
-        { // não vacinado
-            if (pid = fork() != 0)
-            {
+        if (qtdCommand == 1){ // não vacinado
+            if (pid = fork() != 0){
                 processInfo("Main");
-                wait(NULL);
+                waitpid(-1, &status, WNOHANG);  //BACKGROUND
             }
-            else
-            {
+            else{
                 int qtdPar=treatment_command(command[0], parameters, direcionaSaida, nameFile);
                 //Redirecionamento da Saida
                 if(direcionaSaida[0]){
@@ -69,23 +64,18 @@ int main(int argc, char **argv)
                 }
                 return 0;
             }
-        } else if (qtdCommand > 1)
-        { // vacinados
-            if (pid = fork() != 0)
-            {
+        } else if (qtdCommand > 1){ // vacinados
+            if (pid = fork() != 0){
                 processInfo("Deus");
-                wait(NULL);
-            }
-            else
-            {
+                int status;
+                waitpid(-1, &status, WNOHANG);  //BACKGROUND
+            } else{
                 setpgid(0, 0); // pai
                 processInfo("pai");
                 int j;
-                for (j = 1; j < qtdCommand; j++)
-                {
+                for (j = 1; j < qtdCommand; j++){
                     pid = fork();
-                    if (pid == 0)
-                    { // filho
+                    if (pid == 0){ // filho
                         int qtdPar=treatment_command(command[j], parameters, direcionaSaida, nameFile);
                         //Redirecionamento da Saida
                         if(direcionaSaida[0]){
@@ -106,7 +96,7 @@ int main(int argc, char **argv)
                         //////////////////////////
                         processInfo("filho");
                         int status=execvp(parameters[0], parameters);
-                        if(status == 1) 
+                        if(status == 1)
                             printf("Erro, comando ou parametro errado");
                         for(int k=0; k<qtdPar; k++) 
                             free(parameters[k]);
