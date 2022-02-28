@@ -281,6 +281,6 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
             direcionaSaida[0]=0;
         }
         waitpid(-1, &statuspid, WNOHANG);  //BACKGROUND
-        return 0;
+        return pid;
     }
 } 
