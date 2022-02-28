@@ -15,10 +15,14 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
 void psNaoMorrer(int num){
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
 }
+void novaCepa(){
+    char* text = "\n                       ,---.\n                       /    |\n                      /     |\n                     /      |\n                    /       |\n               ___,'        |\n             <  -'          :\n              `-.__..--'``-,_\'_\n                 |o/ ` :,.)_`>\n                 :/ `     ||/)\n                 (_.).__,-` |\\n                 /( `.``   `| :\n                 \'`-.)  `  ; ;\n                 | `       /-<\n                 |     `  /   `.\n ,-_-..____     /|  `    :__..-'\\n/,'-.__\\  ``-./ :`      ;       \\n`\' `\'  `\\  \' :  (   `  /  ,   `. \\n  \'` \'   \\   |  | `   :  :     .\' \\n   \' `\'_  ))  :  ;     |  |      ): :\n  (`-.-'\' ||  |\' \'   ` ;  ;       | |\n   \'-_   `;;._   ( `  /  /_       | |\n    `-.-.// ,'`-._\'__/_,'         ; |\n       \':: :     /     `     ,   /  |\n        || |    (        ,' /   /   |\n        ||                ,'   /    |\n________ Unfortunately all process died!________\n___ Vaccination should be a social contract!____\n____Cooperation was the morally right choice!___\n";
+}
 int main(int argc, char **argv){
     signal(SIGINT, psNaoMorrer);
     signal(SIGQUIT, psNaoMorrer);
     signal(SIGTSTP, psNaoMorrer);
+    signal(SIGUSR1, novaCepa);
     
     char cmd[100], *command[100], *parameters[100];
     int qtdCommand;
