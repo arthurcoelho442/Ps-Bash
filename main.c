@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <signal.h>
 
 void type_prompt();
 int read_command(char **cmd);
@@ -11,8 +12,14 @@ void processInfo(char *msg);
 int treatment_command(char* cmd, char **par, int* direcionaSaida, char *nameFile);
 int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters, char* nameFile);
 int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaSaida, char* nameFile);
-int main(int argc, char **argv)
-{
+void bashNaoMorrer(int num){
+    write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
+}
+int main(int argc, char **argv){
+    signal(SIGINT, bashNaoMorrer);
+    signal(SIGQUIT, bashNaoMorrer);
+    signal(SIGTSTP, bashNaoMorrer);
+    
     char cmd[100], *command[100], *parameters[100];
     int qtdCommand;
     pid_t pid;
@@ -24,6 +31,7 @@ int main(int argc, char **argv)
     while(1){
         type_prompt();
         qtdCommand = read_command(command);
+        
         if(strcmp(command[0], "term") == 0 && qtdCommand == 1)
             exit(EXIT_SUCCESS);
         if (qtdCommand == 1){ // não vacinado
@@ -57,6 +65,12 @@ int main(int argc, char **argv)
                     break;
                 case 4:
                     printf("Erro, comando ou parametro errado");
+                    break;
+                case 5:
+                    perror("Não foi possivel instalar os sinais");
+                    break;
+                case 6:
+                    perror("Não foi possivel bloquear os sinais instalados");
                     break;
             }
         }
@@ -185,9 +199,23 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
     if (pid = fork() != 0){
         processInfo("Deus");
         int status;
+        
         waitpid(-1, &status, WNOHANG);  //BACKGROUND
+        
+        
+        //signal(SIGINT, SIG_IGN);
+        //signal(SIGQUIT, SIG_IGN);
+        //signal(SIGTSTP, SIG_IGN);
+        //signal(SIGKILL, SIG_IGN);
     }
     else {
+        sigset_t newsigset;
+        if((sigemptyset(&newsigset) == -1) || (sigaddset(&newsigset, SIGINT) == -1) || (sigaddset(&newsigset, SIGQUIT) == -1) 
+                || (sigaddset(&newsigset, SIGTSTP) == -1))
+            return 5;
+        if(sigprocmask(SIG_BLOCK, &newsigset, NULL) == -1)
+            return 6;
+        
         setpgid(0, 0); // pai
         processInfo("pai");
         int j;
