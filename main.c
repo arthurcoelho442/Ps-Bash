@@ -6,12 +6,11 @@
 #include <fcntl.h>
 
 void type_prompt();
-int read_command(char *cmd[100]);
+int read_command(char **cmd);
 void processInfo(char *msg);
-int treatment_command(char cmd[100], char *par[100], int* direcionaSaida, char nameFile[100]);
-int naoVacinado(char *command, char** parameters, int* direcionaSaida, char* nameFile);
+int treatment_command(char* cmd, char **par, int* direcionaSaida, char *nameFile);
+int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters, char* nameFile);
 int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaSaida, char* nameFile);
-
 int main(int argc, char **argv)
 {
     char cmd[100], *command[100], *parameters[100];
@@ -25,38 +24,36 @@ int main(int argc, char **argv)
     while(1){
         type_prompt();
         qtdCommand = read_command(command);
-        if(strcmp(command[0], "term") == 0 && qtdCommand == 1){
-            free(command[0]);
+        if(strcmp(command[0], "term") == 0 && qtdCommand == 1)
             exit(EXIT_SUCCESS);
-        }
-        if (qtdCommand == 1){//não Vacinados
+        if (qtdCommand == 1){ // não vacinado
             int qtdPar=treatment_command(command[0], parameters, direcionaSaida, nameFile);
-            switch(naoVacinado(parameters[0], parameters, direcionaSaida, nameFile)){
+            switch(naoVacinado(pid, direcionaSaida, parameters[0], parameters, nameFile)){
                 case 1:
-                    perror("Não foi possivel criar nem abrir o arquivo");
+                    perror("Não foi possivel abrir nem criar o arquivo");
                     break;
                 case 2:
                     perror("Não foi possivel redirecionar a saida");
                     break;
                 case 3:
-                    perror("Não foi possivel retornar para o redirecionamento padrao");
+                    perror("Não foi possivel redirecionar a saida padrao");
                     break;
                 case 4:
                     printf("Erro, comando ou parametro errado");
                     break;
-            } 
+            }
             for(int j=0; j<qtdPar; j++)
                 free(parameters[j]);
         } else if (qtdCommand > 1){ // vacinados
-            switch (vacinados(command, qtdCommand, parameters, direcionaSaida, nameFile)){
+            switch(vacinados(command, qtdCommand, parameters, direcionaSaida, nameFile)){
                 case 1:
-                    perror("Não foi possivel criar nem abrir o arquivo");
+                    perror("Não foi possivel abrir nem criar o arquivo");
                     break;
                 case 2:
                     perror("Não foi possivel redirecionar a saida");
                     break;
                 case 3:
-                    perror("Não foi possivel retornar para o redirecionamento padrao");
+                    perror("Não foi possivel redirecionar a saida padrao");
                     break;
                 case 4:
                     printf("Erro, comando ou parametro errado");
@@ -78,7 +75,7 @@ void type_prompt(){
     printf("psh>");
 }
 
-int read_command(char *cmd[100]){
+int read_command(char **cmd){
     char linha[1024];
     char *tok;
     int count = 0, i = 0;
@@ -119,7 +116,7 @@ void processInfo(char *msg){
             msg, getpid(), sid, getppid(), pgid);
 }
 
-int treatment_command(char cmd[100], char *par[100], int* direcionaSaida, char nameFile[100]){
+int treatment_command(char *cmd, char **par, int* direcionaSaida, char *nameFile){
     int i = 0;
     char *array[100];
 
@@ -144,43 +141,41 @@ int treatment_command(char cmd[100], char *par[100], int* direcionaSaida, char n
     par[i] = NULL;
     return i;
 }
-int naoVacinado(char *command, char** parameters, int* direcionaSaida, char* nameFile){
-    pid_t pid;
+
+int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters, char* nameFile){
+    int status;
     int saida, saveOut;
-    // não vacinado
+    
     if (pid = fork() != 0){
         processInfo("Main");
-        wait(NULL);
-
-        if(direcionaSaida[0]){
-            if(dup2(saveOut, 1) == -1)
-                return 3;
-            
-            close(saveOut);
-            direcionaSaida[0]=0;
-        }
+        waitpid(-1, &status, WNOHANG);  //BACKGROUND
     }
-    else {
+    else{
         //Redirecionamento da Saida
         if(direcionaSaida[0]){
             saida = open(nameFile, O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
             if(saida == -1)
                 return 1;
-            
-            
+
             saveOut = dup(fileno(stdout));
 
             if(dup2(saida, 1) == -1)
                 return 2;
-
             close(saida);
         }
         //////////////////////////
         setpgid(0, 0);
         processInfo("filho");
-        int status=execvp(parameters[0], parameters);
+        status=execvp(commad, parameters);
         if(status == 1)
             return 4;
+
+        if(direcionaSaida[0]){
+            dup2(saveOut, 1);
+            close(saveOut);
+            direcionaSaida[0]=0;
+            return 3;
+        }
         return 0;
     }
 }
@@ -189,7 +184,8 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
     int saida, saveOut;
     if (pid = fork() != 0){
         processInfo("Deus");
-        wait(NULL);
+        int status;
+        waitpid(-1, &status, WNOHANG);  //BACKGROUND
     }
     else {
         setpgid(0, 0); // pai
@@ -204,7 +200,7 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
                     saida = open(nameFile, O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
                     if(saida == -1)
                         return 1;
-                    
+
                     saveOut = dup(fileno(stdout));
 
                     if(dup2(saida, fileno(stdout)) == -1)
@@ -220,8 +216,6 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
                 for(int k=0; k<qtdPar; k++) 
                     free(parameters[k]);
                 return 0;
-            }else if (pid>0){//pai-filho
-                wait(NULL);
                 if(direcionaSaida[0]){
                     dup2(saveOut, fileno(stdout));
                     close(saveOut);
@@ -237,7 +231,7 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
                 perror(nameFile);
                 return 0;
             }
-            
+
             saveOut = dup(fileno(stdout));
 
             if(dup2(saida, fileno(stdout)) == -1){
@@ -256,7 +250,7 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
             close(saveOut);
             direcionaSaida[0]=0;
         }
-        wait(NULL);
+        waitpid(-1, &status, WNOHANG);  //BACKGROUND
         return 0;
     }
-}
+} 
