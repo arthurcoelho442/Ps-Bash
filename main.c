@@ -12,13 +12,13 @@ void processInfo(char *msg);
 int treatment_command(char* cmd, char **par, int* direcionaSaida, char *nameFile);
 int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters, char* nameFile);
 int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaSaida, char* nameFile);
-void bashNaoMorrer(int num){
+void psNaoMorrer(int num){
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
 }
 int main(int argc, char **argv){
-    signal(SIGINT, bashNaoMorrer);
-    signal(SIGQUIT, bashNaoMorrer);
-    signal(SIGTSTP, bashNaoMorrer);
+    signal(SIGINT, psNaoMorrer);
+    signal(SIGQUIT, psNaoMorrer);
+    signal(SIGTSTP, psNaoMorrer);
     
     char cmd[100], *command[100], *parameters[100];
     int qtdCommand;
