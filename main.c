@@ -73,7 +73,7 @@ int main(int argc, char **argv){
                 case 5:
                     perror("Não foi possivel instalar os sinais");
                     break;
-                case 6:
+                case 6: 
                     perror("Não foi possivel bloquear os sinais instalados");
                     break;
             }
@@ -206,11 +206,6 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
         
         waitpid(-1, &status, WNOHANG);  //BACKGROUND
         
-        
-        //signal(SIGINT, SIG_IGN);
-        //signal(SIGQUIT, SIG_IGN);
-        //signal(SIGTSTP, SIG_IGN);
-        //signal(SIGKILL, SIG_IGN);
     }
     else {
         sigset_t newsigset;
