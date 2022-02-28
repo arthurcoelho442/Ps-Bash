@@ -161,6 +161,7 @@ int treatment_command(char *cmd, char **par, int* direcionaSaida, char *nameFile
 }
 
 int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters, char* nameFile){
+
     int status;
     int saida, saveOut;
     
@@ -197,6 +198,7 @@ int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters,
         return 0;
     }
 }
+
 int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaSaida, char* nameFile){
     pid_t pid;
     int saida, saveOut;
@@ -269,6 +271,7 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
         }
         //////////////////////////
         int status=execvp(parameters[0], parameters);
+        int statuspid;
         if(status == 1) 
             printf("Erro, comando ou parametro errado");
         for(int j=0; j<qtdPar; j++) free(parameters[j]);
@@ -277,7 +280,7 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
             close(saveOut);
             direcionaSaida[0]=0;
         }
-        waitpid(-1, &status, WNOHANG);  //BACKGROUND
+        waitpid(-1, &statuspid, WNOHANG);  //BACKGROUND
         return 0;
     }
 } 
