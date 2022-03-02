@@ -11,7 +11,8 @@ int read_command(char **cmd);
 void processInfo(char *msg);
 int treatment_command(char *cmd, char **par, int *direcionaSaida, char *nameFile);
 int naoVacinado(pid_t pid, int *direcionaSaida, char *commad, char **parameters, char *nameFile);
-int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaSaida, char *nameFile);
+int grupo_vacinados(int flag);
+int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaSaida, char *nameFile, pid_t pid_group);
 void psNaoMorrer(int num)
 {
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
@@ -29,7 +30,9 @@ int main(int argc, char **argv)
 
     char cmd[100], *command[100], *parameters[100];
     int qtdCommand;
-    pid_t pid;
+    pid_t pid, pid_group;
+    int count = 0;
+    int flag = 0;
     int saida, saveOut;
     char nameFile[100];
     int direcionaSaida[1];
@@ -65,8 +68,19 @@ int main(int argc, char **argv)
         }
         else if (qtdCommand > 1)
         { // vacinados
-            int aux = vacinados(command, qtdCommand, parameters, direcionaSaida, nameFile);
-            switch (aux)
+            int status;
+            pid_t retorno_group = 0, aux;
+            if (flag == 1)
+                retorno_group = waitpid(pid_group, &status, WNOHANG);
+            if (retorno_group != 0)
+                flag = 0;
+
+            aux = grupo_vacinados(flag);
+            printf("\n\n%d\n\n", aux);
+            if (aux > 0)
+                pid_group = aux;
+            int aux1 = vacinados(command, qtdCommand, parameters, direcionaSaida, nameFile, pid_group);
+            switch (aux1)
             {
             case 1:
                 perror("Não foi possivel abrir nem criar o arquivo");
@@ -86,13 +100,14 @@ int main(int argc, char **argv)
             case 6:
                 perror("Não foi possivel bloquear os sinais instalados");
                 break;
-
             default:
+                flag = 1;
                 break;
             }
         }
     }
-    exit(EXIT_SUCCESS);;
+    exit(EXIT_SUCCESS);
+    ;
 }
 
 void type_prompt()
@@ -124,7 +139,8 @@ int read_command(char **cmd)
     linha[count] = '\0';
     // retorna caso não haja comandos
     if (count == 1)
-        exit(EXIT_SUCCESS);;
+        exit(EXIT_SUCCESS);
+    ;
 
     tok = strtok(linha, ";\n");
     // Divide os comandos caso seja executado mais de um
@@ -223,7 +239,8 @@ int naoVacinado(pid_t pid, int *direcionaSaida, char *commad, char **parameters,
             close(saveOut);
             direcionaSaida[0] = 0;
         }
-        exit(EXIT_SUCCESS);;
+        exit(EXIT_SUCCESS);
+        ;
     }
 }
 
@@ -313,28 +330,88 @@ int naoVacinado(pid_t pid, int *direcionaSaida, char *commad, char **parameters,
     }
 }*/
 
-int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaSaida, char *nameFile)
+int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaSaida, char *nameFile, pid_t pid_group)
 {
-    pid_t pid;
+    printf("\n\ndentro de vacinados: %d\n\n", pid_group);
+    processInfo("Deus");
     int saida, saveOut;
-    pid = fork();
-    if (pid != 0)
+    pid_t pid;
+    sigset_t newsigset;
+    if ((sigemptyset(&newsigset) == -1) || (sigaddset(&newsigset, SIGINT) == -1) || (sigaddset(&newsigset, SIGQUIT) == -1) || (sigaddset(&newsigset, SIGTSTP) == -1))
+        return 5;
+    if (sigprocmask(SIG_BLOCK, &newsigset, NULL) == -1)
+        return 6;
+    int j;
+    for (j = 0; j < qtdCommand; j++)
     {
-        processInfo("Deus");
+        pid_t test;
+        int statusasd;
+        test = waitpid(pid_group, &statusasd, WNOHANG);
+        pid = fork();
+        if (pid == 0)
+        { // filho
+            pid_t aux = getpid();
+            int ak = setpgid(aux, pid_group);
+            printf("\n\ndentro do loop: %d//%d//%d\n\n", pid_group, ak, test);
+
+            int qtdPar = treatment_command(command[j], parameters, direcionaSaida, nameFile);
+            // Redirecionamento da Saida
+            /*if (direcionaSaida[0])
+            {
+                saida = open(nameFile, O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+                if (saida == -1)
+                    return 1;
+
+                saveOut = dup(fileno(stdout));
+
+                if (dup2(saida, fileno(stdout)) == -1)
+                    return 2;
+
+                close(saida);
+            }*/
+            //////////////////////////
+            processInfo("filho");
+            int status = execvp(parameters[0], parameters);
+            /*for (int k = 0; k < qtdPar; k++)
+                free(parameters[k]);*/
+            if (status == 1)
+                return 4;
+
+            if (direcionaSaida[0])
+            {
+                dup2(saveOut, fileno(stdout));
+                close(saveOut);
+                direcionaSaida[0] = 0;
+            }
+            exit(EXIT_SUCCESS);
+        }
+    }
+    return pid_group;
+}
+
+int grupo_vacinados(int flag)
+{
+    if (flag == 0)
+    {
+        pid_t pid;
+        pid = fork();
+        if (pid != 0)
+        {
+            processInfo("Deus");
+        }
+        else
+        {
+            setpgid(0, 0);
+            processInfo("Pai");
+            while (1)
+            {
+            }
+            exit(EXIT_SUCCESS);
+        }
+        printf("\n\n%d//%d\n\n", getpid(), pid);
+        sleep(1);
+        return pid;
     }
     else
-    {
-        sigset_t newsigset;
-        if ((sigemptyset(&newsigset) == -1) || (sigaddset(&newsigset, SIGINT) == -1) || (sigaddset(&newsigset, SIGQUIT) == -1) || (sigaddset(&newsigset, SIGTSTP) == -1))
-            return 5;
-        if (sigprocmask(SIG_BLOCK, &newsigset, NULL) == -1)
-            return 6;
-        setpgid(0, 0);
-        processInfo("Pai");
-        while(1){
-            
-        }
-        exit(EXIT_SUCCESS);  
-    }
-    return pid;
+        return 0;
 }

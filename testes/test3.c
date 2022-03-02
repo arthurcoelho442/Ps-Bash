@@ -11,13 +11,16 @@ int main()
     int pid = fork();
     for (int i = 0; i < 10; i++)
     {
-        if (pid != 0)
-        {
+        if (pid != 0){//Pai
             pid = fork();
-        }else {
-            sleep(60);
+        }else {//Filho
+            sleep(20);
             return 0;
         }
+    }
+    if(pid != 0){
+        sleep(10);
+        killpg(getpid(), SIGUSR1);
     }
     return 0;
 }
