@@ -58,7 +58,8 @@ int read_command(char **cmd);
 void processInfo(char *msg);
 int treatment_command(char* cmd, char **par, int* direcionaSaida, char *nameFile);
 int naoVacinado(int* direcionaSaida, char* commad, char** parameters, char* nameFile, process* processos);
-int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaSaida, char* nameFile);
+int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaSaida, char *nameFile, pid_t pid_group);
+int grupo_vacinados(int flag);
 void psNaoMorrer(int num){
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
 }
