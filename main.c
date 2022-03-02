@@ -67,6 +67,15 @@ void novaCepa()
 {
     char *text = "\n                       ,---.\n                       /    |\n                      /     |\n                     /      |\n                    /       |\n               ___,'        |\n             <  -'          :\n              `-.__..--'``-,_\'_\n                 |o/ ` :,.)_`>\n                 :/ `     ||/)\n                 (_.).__,-` |\\n                 /( `.``   `| :\n                 \'`-.)  `  ; ;\n                 | `       /-<\n                 |     `  /   `.\n ,-_-..____     /|  `    :__..-'\\n/,'-.__\\  ``-./ :`      ;       \\n`\' `\'  `\\  \' :  (   `  /  ,   `. \\n  \'` \'   \\   |  | `   :  :     .\' \\n   \' `\'_  ))  :  ;     |  |      ): :\n  (`-.-'\' ||  |\' \'   ` ;  ;       | |\n   \'-_   `;;._   ( `  /  /_       | |\n    `-.-.// ,'`-._\'__/_,'         ; |\n       \':: :     /     `     ,   /  |\n        || |    (        ,' /   /   |\n        ||                ,'   /    |\n________ Unfortunately all process died!________\n___ Vaccination should be a social contract!____\n____Cooperation was the morally right choice!___\n";
 }
+void pshellBackground(process* p){
+    if(p != NULL){
+        signal(SIGTTOU, SIG_IGN);
+        tcsetpgrp(STDIN_FILENO, p->prox->pid);
+        sleep(30);
+        tcsetpgrp(STDIN_FILENO, getpid());
+    }
+}
+
 int main(int argc, char **argv)
 {
     signal(SIGINT, psNaoMorrer);
@@ -89,8 +98,19 @@ int main(int argc, char **argv)
         type_prompt();
         qtdCommand = read_command(command);
 
-        if (strcmp(command[0], "term") == 0 && qtdCommand == 1)
+        if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
+            for(process* aux = processos->prox; aux!=NULL; aux = aux->prox){
+                kill(aux->pid, SIGKILL);
+                removeProcess(processos, aux->pid);
+            }
             exit(EXIT_SUCCESS);
+        }
+
+        if(strcmp(command[0], "fg") == 0 &&  qtdCommand == 1){
+            pshellBackground(processos);
+            qtdCommand = 0;
+        }
+        
         if (qtdCommand == 1){ // não vacinado
             int qtdPar=treatment_command(command[0], parameters, direcionaSaida, nameFile);
             switch(naoVacinado(direcionaSaida, parameters[0], parameters, nameFile, processos)){
@@ -156,7 +176,6 @@ int main(int argc, char **argv)
         }
     }
     exit(EXIT_SUCCESS);
-    ;
 }
 
 void type_prompt()
