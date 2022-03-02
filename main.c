@@ -6,11 +6,58 @@
 #include <fcntl.h>
 #include <signal.h>
 
+typedef struct process{
+    int pid;
+    int status;
+    int complete;
+    struct process* prox;
+} process;
+process* inicProcess(int pid){
+    process* p = (process*) malloc(sizeof(process));
+    p->pid = pid;
+    p->complete = 0;
+    p->prox = NULL;
+    return p;
+}
+void freeProcess(process* p){
+    process* aux;
+    for(; p != NULL; p = aux){
+        aux = p->prox;
+        free(p);
+    }
+}
+
+void inseriProcess(process* p, process* novo){
+    for(;p->prox != NULL; p = p->prox);
+    p->prox = novo;
+}
+void imprimeProcess(process* p){
+    for(process* aux = p;aux != NULL; aux = aux->prox)
+        printf("Não vacinado pid: %d\n", aux->pid);
+}
+void removeProcess(process* p, int pid){
+    process* ant = p;
+    process* prox = p->prox;
+    process* aux2;
+    
+    for(process* atual = prox;atual != NULL; atual = prox){
+                
+        prox = atual->prox;
+        if(atual->pid == pid && atual->prox == NULL){
+            ant->prox = NULL;
+            free(atual);
+        }else if(atual->pid == pid){
+            ant->prox = prox;
+            free(atual);
+        }
+    }        
+}
+
 void type_prompt();
 int read_command(char **cmd);
 void processInfo(char *msg);
 int treatment_command(char* cmd, char **par, int* direcionaSaida, char *nameFile);
-int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters, char* nameFile);
+int naoVacinado(int* direcionaSaida, char* commad, char** parameters, char* nameFile, process* processos);
 int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaSaida, char* nameFile);
 void psNaoMorrer(int num){
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
@@ -31,7 +78,8 @@ int main(int argc, char **argv){
     char nameFile[100];
     int direcionaSaida[1];
     direcionaSaida[0] = 0;
-
+    process* processos = inicProcess(0);
+    
     while(1){
         type_prompt();
         qtdCommand = read_command(command);
@@ -40,7 +88,7 @@ int main(int argc, char **argv){
             exit(EXIT_SUCCESS);
         if (qtdCommand == 1){ // não vacinado
             int qtdPar=treatment_command(command[0], parameters, direcionaSaida, nameFile);
-            switch(naoVacinado(pid, direcionaSaida, parameters[0], parameters, nameFile)){
+            switch(naoVacinado(direcionaSaida, parameters[0], parameters, nameFile, processos)){
                 case 1:
                     perror("Não foi possivel abrir nem criar o arquivo");
                     break;
@@ -56,6 +104,7 @@ int main(int argc, char **argv){
             }
             for(int j=0; j<qtdPar; j++)
                 free(parameters[j]);
+            imprimeProcess(processos);
         } else if (qtdCommand > 1){ // vacinados
             switch(vacinados(command, qtdCommand, parameters, direcionaSaida, nameFile)){
                 case 1:
@@ -77,6 +126,10 @@ int main(int argc, char **argv){
                     perror("Não foi possivel bloquear os sinais instalados");
                     break;
             }
+        }
+        for(process* aux = processos; aux!=NULL; aux = aux->prox){
+            if(kill(aux->pid, SIGCHLD)==-1)
+                removeProcess(processos, aux->pid);
         }
     }
     return 0;
@@ -160,13 +213,21 @@ int treatment_command(char *cmd, char **par, int* direcionaSaida, char *nameFile
     return i;
 }
 
-int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters, char* nameFile){
+int naoVacinado(int* direcionaSaida, char* commad, char** parameters, char* nameFile, process* processos){
     int status;
     int saida, saveOut;
-    
-    if (pid = fork() != 0){
+    pid_t pid=fork();
+    if (pid != 0){
         processInfo("Main");
         waitpid(-1, &status, WNOHANG);  //BACKGROUND
+        if(processos == NULL){
+            processos = inicProcess(pid);
+        }
+        else{
+            process* novo = inicProcess(pid);
+            inseriProcess(processos, novo);
+        }
+        return 0;
     }
     else{
         //Redirecionamento da Saida
@@ -184,8 +245,11 @@ int naoVacinado(pid_t pid, int* direcionaSaida, char* commad, char** parameters,
         //////////////////////////
         setpgid(0, 0);
         processInfo("filho");
+        
+        
         status=execvp(commad, parameters);
-        if(status == 1)
+        
+        if(status == -1)
             return 4;
 
         if(direcionaSaida[0]){
@@ -254,23 +318,20 @@ int vacinados(char** command, int qtdCommand, char** parameters, int* direcionaS
         //Redirecionamento da Saida
         if(direcionaSaida[0]){
             saida = open(nameFile, O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-            if(saida == -1){
-                perror(nameFile);
-                return 0;
-            }
+            if(saida == -1)
+                return 1;
 
             saveOut = dup(fileno(stdout));
 
-            if(dup2(saida, fileno(stdout)) == -1){
-                perror("Não foi possivel redirecionar a saida \n");
-                return 0;
-            }
+            if(dup2(saida, fileno(stdout)) == -1)
+                return 2;
+
             close(saida);
         }
         //////////////////////////
         int status=execvp(parameters[0], parameters);
         if(status == 1) 
-            printf("Erro, comando ou parametro errado");
+            return 4;
         for(int j=0; j<qtdPar; j++) free(parameters[j]);
         if(direcionaSaida[0]){
             dup2(saveOut, fileno(stdout));
