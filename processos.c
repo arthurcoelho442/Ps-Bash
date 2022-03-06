@@ -141,7 +141,7 @@ int readCommand(char **cmd){
     linha[count] = '\0';
     // retorna caso não haja comandos
     if (count == 1)
-        exit(EXIT_SUCCESS);
+        return 0;
 
     tok = strtok(linha, ";\n");
     // Divide os comandos caso seja executado mais de um
