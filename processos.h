@@ -124,7 +124,7 @@ int notVaccinated(int* direcionaSaida, char* commad, char** parameters, char* na
 /*
 * Função Vaccinated : Cria todos os processo vacinado e adiciona-os a lista de processos.
 * Inputs: indicativo de direcionamento, comando, quantidade de comandos, parametros, nome do arquivo para direcionamento, pid do grupo caso já exista um e a lista de processos.
-* Outputs: retorna 0 para executado com exito e diferente de 0 para o numero do erro.
+* Outputs: retorna 0 para executado com exito e diferente de 0 para o numero do erro, retorna o pid do grupo.
 * Pre-Condicao: Nenhum.
 * Pos-Condicao: Nenhum.
 */
