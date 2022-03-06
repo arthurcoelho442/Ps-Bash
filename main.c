@@ -10,7 +10,7 @@ int main(int argc, char **argv){
     signal(SIGUSR1, psNotDie);
     signal(SIGALRM, newCepa);
 
-    //Declara as
+    /* Declara as variaveis */
     char *command[100], *parameters[100];
     int qtdCommand, saveOut = dup(fileno(stdout));
     pid_t pid_group;
