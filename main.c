@@ -63,8 +63,10 @@ void trata_SIGURS1(process* p){
             int s = status&255 ;
             if(s == 10){
                 for (process *aux2 = p; aux2 != NULL; aux2 = aux2->prox)
-                    if(aux2->pid != aux->pid)
+                    if(aux2->pid != aux->pid){
                         kill(aux2->pid,SIGUSR1);
+                        waitpid(aux2->pid, &status, );
+                    }
                 kill(getpid(), SIGALRM);
                 break;
             }
@@ -79,10 +81,9 @@ int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaS
 void psNaoMorrer(int num){
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
 }
-void novaCepa()
-{
-    char *text = "\n                       ,---.\n                       /    |\n                      /     |\n                     /      |\n                    /       |\n               ___,'        |\n             <  -'          :\n              `-.__..--'``-,_\'_\n                 |o/ ` :,.)_`>\n                 :/ `     ||/)\n                 (_.).__,-` |\\n                 /( `.``   `| :\n                 \'`-.)  `  ; ;\n                 | `       /-<\n                 |     `  /   `.\n ,-_-..____     /|  `    :__..-'\\n/,'-.__\\  ``-./ :`      ;       \\n`\' `\'  `\\  \' :  (   `  /  ,   `. \\n  \'` \'   \\   |  | `   :  :     .\' \\n   \' `\'_  ))  :  ;     |  |      ): :\n  (`-.-'\' ||  |\' \'   ` ;  ;       | |\n   \'-_   `;;._   ( `  /  /_       | |\n    `-.-.// ,'`-._\'__/_,'         ; |\n       \':: :     /     `     ,   /  |\n        || |    (        ,' /   /   |\n        ||                ,'   /    |\n________ Unfortunately all process died!________\n___ Vaccination should be a social contract!____\n____Cooperation was the morally right choice!___\n";
-    //(SIGABRT, SIG_DFL);
+void novaCepa(int num){
+    //char *text = "\n                       ,---.\n                       /    |\n                      /     |\n                     /      |\n                    /       |\n               ___,'        |\n             <  -'          :\n              `-.__..--'``-,_\'_\n                 |o/ ` :,.)_`>\n                 :/ `     ||/)\n                 (_.).__,-` |\ \n                 /( `.``   `| :\n                 \'`-.)  `  ; ;\n                 | `       /-<\n                 |     `  /   `.\n ,-_-..____     /|  `    :__..-'\ \n/,'-.__\\  ``-./ :`      ;       \ \n`\' `\'  `\\  \' :  (   `  /  ,   `. \ \n  \'` \'   \\   |  | `   :  :     .\' \ \n   \' `\'_  ))  :  ;     |  |      ): :\n  (`-.-'\' ||  |\' \'   ` ;  ;       | |\n   \'-_   `;;._   ( `  /  /_       | |\n    `-.-.// ,'`-._\'__/_,'         ; |\n       \':: :     /     `     ,   /  |\n        || |    (        ,' /   /   |\n        ||                ,'   /    |\n________ Unfortunately all process died!________\n___ Vaccination should be a social contract!____\n____Cooperation was the morally right choice!___\n";
+    //printf("%s", text);
 }
 void pshellBackground(process* p){
     for(process* aux = p->prox; aux!=NULL; aux = aux->prox){
