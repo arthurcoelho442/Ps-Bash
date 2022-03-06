@@ -62,13 +62,10 @@ int main(int argc, char **argv){
             int status;
             pid_t aux;
 
-            for (process *verifica = processos->prox->pid; verifica != NULL; verifica = verifica->prox){
-                if (waitpid(pid_group, &status, WNOHANG) == 0 && verifica->identify == 1){
-                    pid_group = verifica->pid;
-                    break;
-                } else
-                    pid_group = 0;
-            }
+            if(waitpid(pid_group, &status, WNOHANG)==0)
+                pid_group = processos->prox->pid;
+            else
+                pid_group = 0;
             
             aux = Vaccinated(command, qtdCommand, parameters, direcionaSaida, nameFile, pid_group, processos);
             switch (aux){
