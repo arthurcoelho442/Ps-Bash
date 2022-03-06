@@ -35,24 +35,24 @@ void inseriProcess(process *p, process *novo)
         ;
     p->prox = novo;
 }
+
 void removeProcess(process *p, int pid)
 {
     process *ant = p;
     process *prox = p->prox;
-    process *aux2;
 
-    for (process *atual = prox; atual != NULL; atual = atual->prox, ant=ant->prox)
+    for (process *atual = prox; atual != NULL; atual = atual->prox , ant=ant->prox )
     {
 
         if (atual->pid == pid && atual->prox == NULL)
         {
             ant->prox = NULL;
-            free(atual);
+            break;
         }
         else if (atual->pid == pid)
         {
             ant->prox = atual->prox;
-            free(atual);
+            break;
         }
     }
 }
@@ -63,8 +63,10 @@ void trata_SIGURS1(process* p){
             int s = status&255 ;
             if(s == 10){
                 for (process *aux2 = p; aux2 != NULL; aux2 = aux2->prox)
-                    if(aux2->pid != aux->pid)
+                    if(aux2->pid != aux->pid){
                         kill(aux2->pid,SIGUSR1);
+                        while(waitpid((aux2->pid),0,WNOHANG)>0){}
+                    }
                 kill(getpid(), SIGALRM);
                 break;
             }
@@ -79,10 +81,36 @@ int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaS
 void psNaoMorrer(int num){
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
 }
-void novaCepa()
-{
-    char *text = "\n                       ,---.\n                       /    |\n                      /     |\n                     /      |\n                    /       |\n               ___,'        |\n             <  -'          :\n              `-.__..--'``-,_\'_\n                 |o/ ` :,.)_`>\n                 :/ `     ||/)\n                 (_.).__,-` |\\n                 /( `.``   `| :\n                 \'`-.)  `  ; ;\n                 | `       /-<\n                 |     `  /   `.\n ,-_-..____     /|  `    :__..-'\\n/,'-.__\\  ``-./ :`      ;       \\n`\' `\'  `\\  \' :  (   `  /  ,   `. \\n  \'` \'   \\   |  | `   :  :     .\' \\n   \' `\'_  ))  :  ;     |  |      ): :\n  (`-.-'\' ||  |\' \'   ` ;  ;       | |\n   \'-_   `;;._   ( `  /  /_       | |\n    `-.-.// ,'`-._\'__/_,'         ; |\n       \':: :     /     `     ,   /  |\n        || |    (        ,' /   /   |\n        ||                ,'   /    |\n________ Unfortunately all process died!________\n___ Vaccination should be a social contract!____\n____Cooperation was the morally right choice!___\n";
-    //(SIGABRT, SIG_DFL);
+void novaCepa(int num){
+    printf("\n                        ,---.");
+    printf("\n                       /    |");
+    printf("\n                      /     |");
+    printf("\n                     /      |");
+    printf("\n                    /       |");
+    printf("\n               ___,'        |");
+    printf("\n             <  -'          :");
+    printf("\n              `-.__..--'``-,_\\_");
+    printf("\n                 |o/ ` :,.)_`>");
+    printf("\n                 :/ `     ||/)");
+    printf("\n                 (_.).__,-` |\\");
+    printf("\n                 /( `.``   `| :");
+    printf("\n                 \'`-.)  `  ; ;");
+    printf("\n                 | `       /-<");
+    printf("\n                 |     `  /   `.");
+    printf("\n ,-_-..____     /|  `    :__..-'\\");
+    printf("\n/,'-.__\\  ``-./ :`      ;       \\");
+    printf("\n`\\ `\\  `\\  \\ :  (   `  /  ,   `. \\");
+    printf("\n  \\` \\   \\   |  | `   :  :     .\\ \\");
+    printf("\n   \\ `\\_  ))  :  ;     |  |      ): :");
+    printf("\n  (`-.-'\\ ||  |\\ \\   ` ;  ;       | |");
+    printf("\n   \\-_   `;;._   ( `  /  /_       | |");
+    printf("\n    `-.-.// ,'`-._\\__/_,'         ; |");
+    printf("\n       \\:: :     /     `     ,   /  |");
+    printf("\n        || |    (        ,' /   /   |");
+    printf("\n        ||                ,'   /    |");
+    printf("\n________ Unfortunately all process died!________");
+    printf("\n___ Vaccination should be a social contract!____");
+    printf("\n____Cooperation was the morally right choice!___\n");
 }
 void pshellBackground(process* p){
     for(process* aux = p->prox; aux!=NULL; aux = aux->prox){
@@ -102,7 +130,7 @@ int main(int argc, char **argv)
     signal(SIGINT, psNaoMorrer);
     signal(SIGQUIT, psNaoMorrer);
     signal(SIGTSTP, psNaoMorrer);
-    signal(SIGUSR1, novaCepa);
+    signal(SIGUSR1, psNaoMorrer);
     signal(SIGALRM, novaCepa);
 
     char cmd[100], *command[100], *parameters[100];
@@ -121,10 +149,9 @@ int main(int argc, char **argv)
         qtdCommand = read_command(command);
 
         if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
-            for(process* aux = processos->prox; aux!=NULL; aux = aux->prox){
+            for(process* aux = processos->prox; aux!=NULL; aux = aux->prox)
                 kill(aux->pid, SIGKILL);
-                removeProcess(processos, aux->pid);
-            }
+            freeProcess(processos);
             exit(EXIT_SUCCESS);
         }
 
@@ -137,16 +164,16 @@ int main(int argc, char **argv)
             int qtdPar=treatment_command(command[0], parameters, direcionaSaida, nameFile);
             switch(naoVacinado(direcionaSaida, parameters[0], parameters, nameFile, processos)){
                 case 1:
-                    perror("Não foi possivel abrir nem criar o arquivo");
+                    perror("Não foi possivel abrir nem criar o arquivo\n");
                     break;
                 case 2:
-                    perror("Não foi possivel redirecionar a saida");
+                    perror("Não foi possivel redirecionar a saida\n");
                     break;
                 case 3:
-                    perror("Não foi possivel redirecionar a saida padrao");
+                    perror("Não foi possivel redirecionar a saida padrao\n");
                     break;
                 case 4:
-                    printf("Erro, comando ou parametro errado");
+                    printf("Erro, comando ou parametro errado\n");
                     break;
             }
             for (int j = 0; j < qtdPar; j++)
@@ -168,22 +195,22 @@ int main(int argc, char **argv)
             switch (aux)
             {
             case 1:
-                perror("Não foi possivel abrir nem criar o arquivo");
+                perror("Não foi possivel abrir nem criar o arquivo\n");
                 break;
             case 2:
-                perror("Não foi possivel redirecionar a saida");
+                perror("Não foi possivel redirecionar a saida\n");
                 break;
             case 3:
-                perror("Não foi possivel redirecionar a saida padrao");
+                perror("Não foi possivel redirecionar a saida padrao\n");
                 break;
             case 4:
-                perror("Erro, comando ou parametro errado");
+                perror("Erro, comando ou parametro errado\n");
                 break;
             case 5:
-                perror("Não foi possivel instalar os sinais");
+                perror("Não foi possivel instalar os sinais\n");
                 break;
             case 6:
-                perror("Não foi possivel bloquear os sinais instalados");
+                perror("Não foi possivel bloquear os sinais instalados\n");
                 break;
             default:
                 pid_group=aux;
@@ -194,12 +221,9 @@ int main(int argc, char **argv)
         trata_SIGURS1(processos);
         for (process *aux = processos; aux != NULL; aux = aux->prox)
         {
-            if (aux->identify == 1)
-                count += 1;
-            
+           
             if (kill(aux->pid, SIGCHLD) == -1)
             {
-                if (aux->identify == 1) count-=1;
                 removeProcess(processos, aux->pid);
             }
         }
