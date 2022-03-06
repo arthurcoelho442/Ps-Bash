@@ -123,6 +123,7 @@ int main(int argc, char **argv)
         if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
             for(process* aux = processos->prox; aux!=NULL; aux = aux->prox)
                 kill(aux->pid, SIGKILL);
+            freeProcess(processos);
             exit(EXIT_SUCCESS);
         }
 
