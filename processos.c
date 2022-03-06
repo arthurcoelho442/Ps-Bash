@@ -1,59 +1,70 @@
 #include "processos.h"
 process* inicProcess(int pid, int idt){
-    process* p = (process*) malloc(sizeof(process));
-    p->pid = pid;
-    p->identify = idt;
-    p->prox = NULL;
-    return p;
+    process* p = (process*) malloc(sizeof(process));//aloca o processo dinamicamente
+    p->pid = pid;//coloca o pid no processo
+    p->identify = idt;//coloca o id de vacinado ou não vacinado
+    p->prox = NULL;//define o proximo como nulo
+    return p;//retorna o processo
 }
 void freeProcess(process *p){
     process *aux;
+    //Anda pela lista de processos
     for (; p != NULL; p = aux){
         aux = p->prox;
-        free(p);
+        free(p);//libera o processo
     }
 }
 void insertProcess(process *p, process *novo){
+    //anda até o final da lista encadeada
     for (; p->prox != NULL; p = p->prox);
-    p->prox = novo;
+    
+    p->prox = novo;//adiciona o novo processo ao final da lista
 }
 void removeProcess(process *p, int pid){
-    process *ant = p;
-    process *prox = p->prox;
+    process *ant = p;//defini o anterior como processo atual auxiliar
+    process *prox = p->prox;//defini o proximo da lista
 
+    //anda pela lista
     for (process *atual = prox; atual != NULL; atual = atual->prox, ant=ant->prox){
+        //entra caso ache o processo e ele seja o ultimo da lista
         if (atual->pid == pid && atual->prox == NULL){
+            //remove da lista e sai do loop
             ant->prox = NULL;
             break;
-            //free(atual);
         }
-        else if (atual->pid == pid){
+        else if (atual->pid == pid){//entra caso ache o processo e ele não seja o ultimo da lista
+            //remove da lista e sai do loop
             ant->prox = atual->prox;
             break;
-            //free(atual);
         }
     }
 }
 void treatsSIGUSR1(process* p){
-    int status;
+    int status;//variavel do status do processo
    
+    //anda pela lista de processos
     for(process *aux = p; aux != NULL; aux = aux->prox){
-            waitpid(aux->pid, &status, WNOHANG);
-            int s = status&255 ;
+            waitpid(aux->pid, &status, WNOHANG);//verifica o status de cada processo da lista
+            int s = status&255 ;//retorna o numero do sinal que matou o processo caso ele tenha morrido por sinal
+            //entra se o sinal que matou o processo foi um SIGUSR1
             if(s == 10){
+                //anda pela lista de processos
                 for (process *aux2 = p; aux2 != NULL; aux2 = aux2->prox)
-                    if(aux2->pid != aux->pid){
-                        kill(aux2->pid,SIGUSR1);
+                    if(aux2->pid != aux->pid){//entra caso o processo seja diferente do processo que recebeu o sinal
+                        kill(aux2->pid,SIGUSR1);//envia o sinal de SIGUSR1
+                        //Espera ate que o zombi suma
                         int i=0, statusf;
                         while(i==0)
                             i=waitpid(aux2->pid,&statusf,WNOHANG);
                     }
+                //manda um alerta para a main avisando da nova cepa
                 kill(getpid(), SIGALRM);
-                break;
+                break;//retorna para a main
             }
     }
 }
 void psNotDie(int num){
+    //Main vacinada imprime 
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
     write(STDERR_FILENO, "psh>", 4);
 }
@@ -94,6 +105,7 @@ void pshellBackground(process* p){
         if(aux->identify == 1){
             signal(SIGTTOU, SIG_IGN);
             tcsetpgrp(STDIN_FILENO, aux->pid);
+            printf("\n%d\n", aux->pid);
             sleep(30);
             tcsetpgrp(STDIN_FILENO, getpid());
             break;
@@ -167,19 +179,22 @@ int treatmentCommand(char *cmd, char **par, int *direcionaSaida, char *nameFile)
 }
 
 int notVaccinated(int *direcionaSaida, char *commad, char **parameters, char *nameFile, process *processos){
-    int status;
-    int saida;
-    pid_t pid = fork();
-    if (pid != 0){
+    int status;//armazedo o retorno da função execvp
+    int saida;//
+    pid_t pid = fork();//gera novo processo
+    
+    if (pid != 0){//Main
+        //entra casso a lista de processos esteja vazia
         if (processos == NULL)
-            processos = inicProcess(pid, 0);
-        else{
-            process *novo = inicProcess(pid, 0);
-            insertProcess(processos, novo);
+            processos = inicProcess(pid, 0);//incere novo processo
+        else{//entra caso já haja uma lista de processos
+            process *novo = inicProcess(pid, 0);//cria novo processo
+            insertProcess(processos, novo);//adiciona o processo a lista
         }
-    }else{
-        setpgid(0, 0);        
-        // Redirecionamento da Saida
+    }else{//Processo
+        setpgid(0, 0);//Isola o processo    
+        
+        // Redirecionamento da Saida para arquivo
         if (direcionaSaida[0]){
             saida = open(nameFile, O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
             if (saida == -1)
@@ -192,7 +207,7 @@ int notVaccinated(int *direcionaSaida, char *commad, char **parameters, char *na
         }
         //////////////////////////
         
-        status=execvp(commad, parameters);
+        status=execvp(commad, parameters);//executa o comando
         
         if(status == -1)
             return 4;

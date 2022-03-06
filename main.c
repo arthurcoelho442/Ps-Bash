@@ -3,9 +3,7 @@
 #include "processos.h"
 
 int main(int argc, char **argv){
-    
-    /* Define Handler para os sinais */
-    signal(SIGINT, psNotDie); 
+    signal(SIGINT, psNotDie);
     signal(SIGQUIT, psNotDie);
     signal(SIGTSTP, psNotDie);
     signal(SIGUSR1, psNotDie);
@@ -20,30 +18,26 @@ int main(int argc, char **argv){
     process* processos = inicProcess(0,0);
     
     while(1){
-        /* Inicia linha de comando 'psh>' */
         typePrompt();
-
-        /* Le os comandos digitados no teclado e retorna a qtd de comandos digitados */
         qtdCommand = readCommand(command);
 
-        /* Propaga o sinal do SIGURS1  entre os processos*/
         treatsSIGUSR1(processos);
-
-        /* Mata todos os processos e termina o programa */
         if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
             for(process* aux = processos->prox; aux!=NULL; aux = aux->prox)
-                kill(aux->pid, SIGKILL);    //Mata processo de PID == aux->pid
-            freeProcess(processos); //Libera lista de processos 
+                kill(aux->pid, SIGKILL);
+            freeProcess(processos);
             exit(EXIT_SUCCESS);
         }
-        /* Coloca temporariamente o grupo de vacinados em foreground e psh em Background, por 30 segundos */
+        
         if(strcmp(command[0], "fg") == 0 &&  qtdCommand == 1){
             pshellBackground(processos);
             qtdCommand = 0; //Seta quantidade de comando para 0;
         }
 
-        if (qtdCommand == 1){ // não vacinados
+        if (qtdCommand == 1){ // não vacinado
+            //trata o comando digitado
             int qtdPar=treatmentCommand(command[0], parameters, direcionaSaida, nameFile);
+            //Executa o não vacinado e imprime na tela caso haja algum erro
             switch(notVaccinated(direcionaSaida, parameters[0], parameters, nameFile, processos)){
                 case 1:
                     perror("Não foi possivel abrir nem criar o arquivo\n");
@@ -58,6 +52,7 @@ int main(int argc, char **argv){
                     printf("Erro, comando ou parametro errado\n");
                     break;
             }
+            //Retorna o direcionamento para o padrão
             for (int j = 0; j < qtdPar; j++)
                 free(parameters[j]);
             if (direcionaSaida[0]){
@@ -65,16 +60,19 @@ int main(int argc, char **argv){
                 close(saveOut);
                 direcionaSaida[0] = 0;
             }
+            /////////////////////////////////////////
         }
         else if (qtdCommand > 1){// vacinados
-            int status;
-            pid_t aux;
-
+            int status;//armazena o status do grupo
+            pid_t aux;//salva o pid do grupo
+            
+            //Verifica se o grupo existe
             if(waitpid(pid_group, &status, WNOHANG)==0)
                 pid_group = processos->prox->pid;
             else
                 pid_group = 0;
-            
+            ////////////////////////////
+            //executa os processos vacinados
             aux = Vaccinated(command, qtdCommand, parameters, direcionaSaida, nameFile, pid_group, processos);
             switch (aux){
             case 1:
@@ -99,14 +97,16 @@ int main(int argc, char **argv){
                 pid_group=aux;
                 break;
             }
+            //Retorna o direcionamento para o padão
             if (direcionaSaida[0]){
                 dup2(saveOut, 1);
                 close(saveOut);
                 direcionaSaida[0] = 0;
             }
+            ///////////////////////////////////////
         }
-        updadeProcessList(processos);
-        sleep(1);
+        updadeProcessList(processos);//Verifica se algum processo já moreu e atualiza a lista
+        sleep(1);//espera 1 segundo para printar ps> na saida padrão
     }
     exit(EXIT_SUCCESS);
 }
