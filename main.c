@@ -11,7 +11,7 @@ int main(int argc, char **argv){
 
     char *command[100], *parameters[100];
     int qtdCommand, saveOut = dup(fileno(stdout));
-    pid_t pid_group;
+    pid_t pid_group=0;
     char nameFile[100];
     int direcionaSaida[1];
     direcionaSaida[0] = 0;
@@ -59,13 +59,7 @@ int main(int argc, char **argv){
             }
         }
         else if (qtdCommand > 1){// vacinados
-            int status;
             pid_t aux;
-
-            if(waitpid(pid_group, &status, WNOHANG)==0)
-                pid_group = processos->prox->pid;
-            else
-                pid_group = 0;
             
             aux = Vaccinated(command, qtdCommand, parameters, direcionaSaida, nameFile, pid_group, processos);
             switch (aux){
