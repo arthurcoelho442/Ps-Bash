@@ -69,7 +69,6 @@ void psNotDie(int num){
     write(STDERR_FILENO, "psh>", 4);
 }
 void newCepa(int num){
-    printf("You shall not pass: %d\n",num);
     printf("\n                        ,---.");
     printf("\n                       /    |");
     printf("\n                      /     |");
@@ -101,30 +100,29 @@ void newCepa(int num){
     printf("\n____Cooperation was the morally right choice!___\n");
 }
 void pshellBackground(process* p){
-    for(process* aux = p->prox; aux!=NULL; aux = aux->prox){
-        if(aux->identify == 1){
+    for(process* aux = p->prox; aux!=NULL; aux = aux->prox){ //varre a lista encadeada de processos
+        if(aux->identify == 1){ // indentifica se é um processo de um grupo de vacinados
             signal(SIGTTOU, SIG_IGN);
-            tcsetpgrp(STDIN_FILENO, aux->pid);
-            printf("\n%d\n", aux->pid);
+            tcsetpgrp(STDIN_FILENO, aux->pid); //envia os processos para foreground
             sleep(30);
-            tcsetpgrp(STDIN_FILENO, getpid());
+            tcsetpgrp(STDIN_FILENO, getpid()); //envia a main para foreground
             break;
         }
     }
 }
 void typePrompt(){
-    static int first_time = 1;
-    if (first_time){
+    static int first_time = 1; 
+    if (first_time){ //limpa o terminal se for a primeira vez que entra na shell
         const char *CLEAR_SCREEN_ANSI = " \e[1;1H\e[2J";
         write(STDOUT_FILENO, CLEAR_SCREEN_ANSI, 12);
         first_time = 0;
     }
-    printf("psh>");
+    printf("psh>"); //printa sempre depois que um comando é dado
 }
 void updadeProcessList(process* p){
-    for (process *aux = p; aux != NULL; aux = aux->prox)
-        if (kill(aux->pid, SIGCHLD) == -1)
-            removeProcess(p, aux->pid);
+    for (process *aux = p; aux != NULL; aux = aux->prox)//varre toda lista de processos
+        if (kill(aux->pid, SIGCHLD) == -1) // condicional que procura qual processo esta morto para retirar da lista
+            removeProcess(p, aux->pid); // remove
 }
 int readCommand(char **cmd){
     char linha[1024];
@@ -132,19 +130,19 @@ int readCommand(char **cmd){
     int count = 0, i = 0;
 
     // Pega a linha digitada
-    for (;;){
+    for (;;){ //loop para pega todos os char's e armazena-los na string linha
         int c = fgetc(stdin);
         linha[count++] = (char)c;
         if (c == '\n')
             break;
     }
-    linha[count] = '\0';
+    linha[count] = '\0'; //coloca um bit de finalização no final da string
     // retorna caso não haja comandos
     if (count == 1)
         return 0;
 
-    tok = strtok(linha, ";\n");
-    // Divide os comandos caso seja executado mais de um
+    tok = strtok(linha, ";\n"); 
+    // Divide os comandos caso seja executado mais de um ';' e ignora o \n
     while (tok){
         cmd[i++] = strdup(tok);
         tok = strtok(NULL, ";\n");
@@ -157,7 +155,7 @@ int treatmentCommand(char *cmd, char **par, int *direcionaSaida, char *nameFile)
     
     char *tok = strtok(cmd, ">");
     cmd = strdup(tok);
-    tok = strtok(NULL, ">");
+    tok = strtok(NULL, ">"); //separa os parametros e verifica se a redirecionamento
     if (tok)
     {
         array[0] = strdup(tok);
@@ -167,7 +165,7 @@ int treatmentCommand(char *cmd, char **par, int *direcionaSaida, char *nameFile)
         direcionaSaida[0] = 1;
     }
     tok = strtok(cmd, " ");
-    while (tok)
+    while (tok) //ignora os espaços
     {
         array[i++] = strdup(tok);
         tok = strtok(NULL, " ");
@@ -175,7 +173,7 @@ int treatmentCommand(char *cmd, char **par, int *direcionaSaida, char *nameFile)
     for (int j = 0; j < i; j++)
         par[j] = array[j];
     par[i] = NULL;
-    return i;
+    return i; 
 }
 
 int notVaccinated(int *direcionaSaida, char *commad, char **parameters, char *nameFile, process *processos){
@@ -227,11 +225,11 @@ int Vaccinated(char **command, int qtdCommand, char **parameters, int *direciona
     if (sigprocmask(SIG_BLOCK, &newsigset, NULL) == -1)
         return 6;
     
-    for (int j = 0; j < qtdCommand; j++){
+    for (int j = 0; j < qtdCommand; j++){ //cria os filhos e execulta os comandos
         pid = fork();
         if(pid != 0 && j==0)
             sleep(1);
-        if(pid_group == 0 ) pid_group=pid;
+        if(pid_group == 0 ) pid_group=pid; //seta o valor pid_group para todos os outros filhos
         if (pid == 0){ // filho
             pid_t aux = getpid();
             if(j == 0 && pid_group == 0)setpgid(aux, 0);
