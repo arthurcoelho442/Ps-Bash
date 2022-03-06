@@ -17,7 +17,6 @@ process* inicProcess(int pid, int idt){
     p->pid = pid;
     p->identify = idt;
     p->prox = NULL;
-    p->identify = identificador;
     return p;
 }
 void freeProcess(process *p)
@@ -316,7 +315,6 @@ int naoVacinado(int *direcionaSaida, char *commad, char **parameters, char *name
             close(saveOut);
             direcionaSaida[0] = 0;
         }
-        slepp(1);
         return 0;
     }
     else
@@ -411,6 +409,6 @@ int vacinados(char **command, int qtdCommand, char **parameters, int *direcionaS
             }
         }
     }
-sleep(1);
+    sleep(1);
     return pid_group;
 }
