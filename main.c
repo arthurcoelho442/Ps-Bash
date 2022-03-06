@@ -21,7 +21,7 @@ int main(int argc, char **argv){
         typePrompt();
         qtdCommand = readCommand(command);
 
-        treatsSIGURS1(processos);
+        treatsSIGUSR1(processos);
         if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
             for(process* aux = processos->prox; aux!=NULL; aux = aux->prox)
                 kill(aux->pid, SIGKILL);
@@ -62,10 +62,13 @@ int main(int argc, char **argv){
             int status;
             pid_t aux;
 
-            if(waitpid(pid_group, &status, WNOHANG)==0)
-                pid_group = processos->prox->pid;
-            else
-                pid_group = 0;
+            for (process *verifica = processos->prox->pid; verifica != NULL; verifica = verifica->prox){
+                if (waitpid(pid_group, &status, WNOHANG) == 0 && verifica->identify == 1){
+                    pid_group = verifica->pid;
+                    break;
+                } else
+                    pid_group = 0;
+            }
             
             aux = Vaccinated(command, qtdCommand, parameters, direcionaSaida, nameFile, pid_group, processos);
             switch (aux){

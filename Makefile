@@ -1,5 +1,6 @@
 #Antes de executar o progama entre na pasta onde 
 #o programa esta localizado.
+#Alunos: Arthur Coelho Estevão, Milena da Silva Mantovanelli e Mayke Wallace Silva Alves.
 
 
 compile:

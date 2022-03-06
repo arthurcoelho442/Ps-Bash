@@ -34,7 +34,7 @@ void removeProcess(process *p, int pid){
         }
     }
 }
-void treatsSIGURS1(process* p){
+void treatsSIGUSR1(process* p){
     int status;
    
     for(process *aux = p; aux != NULL; aux = aux->prox){
