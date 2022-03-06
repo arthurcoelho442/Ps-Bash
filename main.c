@@ -71,8 +71,10 @@ int main(int argc, char **argv){
             /////////////////////////////////////////
         }
         else if (qtdCommand > 1){// vacinados
-            pid_t aux;
-            
+            int status;//armazena o status do grupo
+            pid_t aux;//salva o pid do grupo
+            if(processos->prox==NULL) pid_group=0;
+            //executa os processos vacinados
             aux = Vaccinated(command, qtdCommand, parameters, direcionaSaida, nameFile, pid_group, processos);
             switch (aux){
             case 1:

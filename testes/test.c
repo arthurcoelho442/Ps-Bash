@@ -1,121 +1,57 @@
-// Scott Kuhl
+#include<stdio.h>
+#include<stdlib.h>
+#include<sys/wait.h>
+#include<unistd.h>
+#include<string.h>
 
-/* This program is intended to show how process group IDs work and how
- * other process groups are in the "background". By commenting using
- * different kill() calls at the bottom of this program, you can
- * explore this behavior. */
+void read_command(char cmd[], char *par[]){
+    char line[1024];
+    int count =0, i=0, j=0;
+    char *array[100], *pch;
 
+    for(;;){
+        int c = fgetc(stdin);
+        line[count++] = (char) c;
+        if( c == '\n' ) break;
+    }
+    if(count == 1) return;
+    pch = strtok(line, "\n");
 
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
+    while(pch != NULL){
+        array[i++] = strdup(pch);
+        pch = strtok (NULL, "\n");
+    }
+    strcpy(cmd, array[0]);
 
-void sighandler(int signo)
-{
-	printf("pid=%d received signal %d, exiting.\n", getpid(), signo);
-	exit(EXIT_SUCCESS);
+    for(int j=0; j<i; j++)
+        par[j] = array [j];
+    par[i] = NULL;
 }
 
-void processInfo(char *msg)
-{
-	pid_t pgid = getpgid(getpid());
-	if(pgid == -1)
-		perror("getpgid error:");
-	pid_t sid = getsid(0);
-	if(sid == -1)
-		perror("getsid error:");
-
-	printf("%s: This is %d in session %d (created from %d); pgid=%d\n",
-	       msg, getpid(), sid, getppid(), pgid);
+void type_prompt(){
+    static int first_time = 1;
+    if(first_time){
+        const char* CLEAR_SCREEN_ANSI =" \e[1;1H\e[2J";
+        write(STDOUT_FILENO,CLEAR_SCREEN_ANSI, 12);
+        first_time=0;
+    }
+    printf("psh>");
 }
 
-
-int main(void)
-{
-	signal(SIGUSR1, sighandler);
-	processInfo("main");
-
-	// Start two child processes which sleep for 4 seconds and then
-	// exit.
-	int f = fork();
-	if(f < 0)
-		perror("fork error:");
-	else if(f == 0) /* child */
-	{
-		processInfo("child1");
-		sleep(40);
-		printf("child1 exiting\n");
-		exit(EXIT_SUCCESS);
-	}
-
-	f = fork();
-	if(f < 0)
-		perror("fork error:");
-	else if(f == 0) /* child */
-	{
-		processInfo("child2");
-		sleep(40);
-		printf("child2 exiting\n");
-		exit(EXIT_SUCCESS);
-	}
-
-	/* Fork another process. */
-	f = fork();
-	if(f < 0)
-		perror("fork error:");
-	else if(f == 0) /* Create a new process (child3) that will also
-	                 * spawn off two children. */
-	{
-		if(setpgid(0, 0) == -1) // make child3 a new process group.
-			perror("setpgid error:");
-		processInfo("child3");
-
-		/* make child3 process spawn off two more children. These
-		 * children will be in the same progress group as child3 is
-		 * in */
-		f = fork();
-		if(f < 0)
-			perror("fork error:");
-		else if(f == 0) /* child */
-		{
-			processInfo("child3-1");
-			sleep(30);
-			printf("child3-1 exiting\n");
-			exit(EXIT_SUCCESS);
-		}
-
-		f = fork();
-		if(f < 0)
-			perror("fork error:");
-		else if(f == 0) /* child */
-		{
-			processInfo("child3-2");
-			sleep(30);
-			printf("child3-2 exiting\n");
-			exit(EXIT_SUCCESS);
-		}
-		sleep(40);
-
-		/* Send a signal to child3; child3-1 and child3-2 will still survive. */
-		// kill(getpid(), SIGUSR1);
-
-		/* Send a signal to all processes in the child3 process group. This should kill child3, child3-1, child3-2. */
-//		kill(0, SIGUSR1); // signal to all processes in this process's group
-		wait(NULL); // wait for child3-1
-		wait(NULL); // wait for child3-2
-
-		printf("child3 exiting\n");
-		exit(EXIT_SUCCESS);
-	}
-
-	sleep(50);
-//	kill(0, SIGUSR1); // signal to all processes in this process's group; should kill main, child1, child2
-	wait(NULL); // wait for child1
-	wait(NULL); // wait for child2
-	wait(NULL); // wait for child3
-	printf("main exiting\n");
+int main(int argc, char **argv){
+    char cmd[100], command[100], *parameters[20];
+    char *envp[]={(char*) "PATH=/bin", 0};
+    while(1){
+        type_prompt();
+        read_command(command, parameters);
+        if(fork()!=0)
+            wait(NULL);
+        else{
+            strcpy(cmd, "/bin/");
+            strcat(cmd, command);
+            execve(cmd, parameters, envp);
+        }
+        if(strcmp(command, "exit") == 0) break;
+    }
+    return EXIT_SUCCESS;
 }
