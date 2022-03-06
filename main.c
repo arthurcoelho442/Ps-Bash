@@ -6,8 +6,7 @@ int main(int argc, char **argv){
     signal(SIGINT, psNotDie);
     signal(SIGQUIT, psNotDie);
     signal(SIGTSTP, psNotDie);
-    signal(SIGUSR1, psNotDie);
-    signal(SIGALRM, newCepa);
+    signal(SIGUSR1, newCepa);
 
     char *command[100], *parameters[100];
     int qtdCommand, saveOut = dup(fileno(stdout));
@@ -59,7 +58,7 @@ int main(int argc, char **argv){
                 direcionaSaida[0] = 0;
             }
         }
-        else if (qtdCommand > 1){ // vacinados
+        else if (qtdCommand > 1){// vacinados
             int status;
             pid_t aux;
 
@@ -102,6 +101,7 @@ int main(int argc, char **argv){
         }
         treatsSIGURS1(processos);
         updadeProcessList(processos);
+        sleep(1);
     }
     exit(EXIT_SUCCESS);
 }

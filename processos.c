@@ -44,7 +44,6 @@ void treatsSIGURS1(process* p){
                 for (process *aux2 = p; aux2 != NULL; aux2 = aux2->prox)
                     if(aux2->pid != aux->pid)
                         kill(aux2->pid,SIGUSR1);
-                kill(getpid(), SIGALRM);
                 break;
             }
     }
