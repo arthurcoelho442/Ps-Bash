@@ -121,10 +121,8 @@ int main(int argc, char **argv)
         qtdCommand = read_command(command);
 
         if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
-            for(process* aux = processos->prox; aux!=NULL; aux = aux->prox){
+            for(process* aux = processos->prox; aux!=NULL; aux = aux->prox)
                 kill(aux->pid, SIGKILL);
-                removeProcess(processos, aux->pid);
-            }
             exit(EXIT_SUCCESS);
         }
 
