@@ -94,7 +94,6 @@ void pshellBackground(process* p){
         if(aux->identify == 1){
             signal(SIGTTOU, SIG_IGN);
             tcsetpgrp(STDIN_FILENO, aux->pid);
-            printf("\n%d\n", aux->pid);
             sleep(30);
             tcsetpgrp(STDIN_FILENO, getpid());
             break;

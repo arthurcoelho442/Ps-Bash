@@ -3,7 +3,9 @@
 #include "processos.h"
 
 int main(int argc, char **argv){
-    signal(SIGINT, psNotDie);
+    
+    /* Define Handler para os sinais */
+    signal(SIGINT, psNotDie); 
     signal(SIGQUIT, psNotDie);
     signal(SIGTSTP, psNotDie);
     signal(SIGUSR1, psNotDie);
@@ -18,23 +20,29 @@ int main(int argc, char **argv){
     process* processos = inicProcess(0,0);
     
     while(1){
+        /* Inicia linha de comando 'psh>' */
         typePrompt();
+
+        /* Le os comandos digitados no teclado e retorna a qtd de comandos digitados */
         qtdCommand = readCommand(command);
 
+        /* Propaga o sinal do SIGURS1  entre os processos*/
         treatsSIGUSR1(processos);
+
+        /* Mata todos os processos e termina o programa */
         if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
             for(process* aux = processos->prox; aux!=NULL; aux = aux->prox)
-                kill(aux->pid, SIGKILL);
-            freeProcess(processos);
+                kill(aux->pid, SIGKILL);    //Mata processo de PID == aux->pid
+            freeProcess(processos); //Libera lista de processos 
             exit(EXIT_SUCCESS);
         }
-
+        /* Coloca temporariamente o grupo de vacinados em foreground e psh em Background, por 30 segundos */
         if(strcmp(command[0], "fg") == 0 &&  qtdCommand == 1){
             pshellBackground(processos);
             qtdCommand = 0;
         }
 
-        if (qtdCommand == 1){ // não vacinado
+        if (qtdCommand == 1){ // não vacinados
             int qtdPar=treatmentCommand(command[0], parameters, direcionaSaida, nameFile);
             switch(notVaccinated(direcionaSaida, parameters[0], parameters, nameFile, processos)){
                 case 1:

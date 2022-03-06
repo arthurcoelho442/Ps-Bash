@@ -1,0 +1,10 @@
+    PID TTY          TIME CMD
+   5844 pts/0    00:00:00 bash
+   8523 pts/0    00:00:00 make
+   8533 pts/0    00:00:00 make
+   8534 pts/0    00:00:00 psBash
+   8537 pts/0    00:00:00 xcalc
+   8539 pts/0    00:00:00 xcalc
+   8540 pts/0    00:00:00 xcalc
+   8541 pts/0    00:00:00 xcalc
+   8551 pts/0    00:00:00 ps
