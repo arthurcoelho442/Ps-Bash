@@ -1,5 +1,4 @@
 #include "processos.h"
-
 process* inicProcess(int pid, int idt){
     process* p = (process*) malloc(sizeof(process));
     p->pid = pid;
@@ -37,21 +36,29 @@ void removeProcess(process *p, int pid){
 }
 void treatsSIGURS1(process* p){
     int status;
+   
     for(process *aux = p; aux != NULL; aux = aux->prox){
             waitpid(aux->pid, &status, WNOHANG);
             int s = status&255 ;
             if(s == 10){
                 for (process *aux2 = p; aux2 != NULL; aux2 = aux2->prox)
-                    if(aux2->pid != aux->pid)
+                    if(aux2->pid != aux->pid){
                         kill(aux2->pid,SIGUSR1);
+                        int i=0, statusf;
+                        while(i==0)
+                            i=waitpid(aux2->pid,&statusf,WNOHANG);
+                    }
+                kill(getpid(), SIGALRM);
                 break;
             }
     }
 }
 void psNotDie(int num){
     write(STDERR_FILENO, "\nEstou vacinada...desista!!\n", 28);
+    write(STDERR_FILENO, "psh>", 4);
 }
 void newCepa(int num){
+    printf("You shall not pass: %d\n",num);
     printf("\n                        ,---.");
     printf("\n                       /    |");
     printf("\n                      /     |");
@@ -208,6 +215,8 @@ int Vaccinated(char **command, int qtdCommand, char **parameters, int *direciona
     
     for (int j = 0; j < qtdCommand; j++){
         pid = fork();
+        if(pid != 0 && j==0)
+            sleep(1);
         if(pid_group == 0 ) pid_group=pid;
         if (pid == 0){ // filho
             pid_t aux = getpid();
@@ -240,6 +249,5 @@ int Vaccinated(char **command, int qtdCommand, char **parameters, int *direciona
             }
         }
     }
-    sleep(1);
     return pid_group;
 }

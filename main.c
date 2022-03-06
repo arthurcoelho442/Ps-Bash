@@ -6,7 +6,8 @@ int main(int argc, char **argv){
     signal(SIGINT, psNotDie);
     signal(SIGQUIT, psNotDie);
     signal(SIGTSTP, psNotDie);
-    signal(SIGUSR1, newCepa);
+    signal(SIGUSR1, psNotDie);
+    signal(SIGALRM, newCepa);
 
     char *command[100], *parameters[100];
     int qtdCommand, saveOut = dup(fileno(stdout));
@@ -16,12 +17,11 @@ int main(int argc, char **argv){
     direcionaSaida[0] = 0;
     process* processos = inicProcess(0,0);
     
-    
-    
     while(1){
         typePrompt();
         qtdCommand = readCommand(command);
 
+        treatsSIGURS1(processos);
         if (strcmp(command[0], "term") == 0 && qtdCommand == 1){
             for(process* aux = processos->prox; aux!=NULL; aux = aux->prox)
                 kill(aux->pid, SIGKILL);
@@ -62,13 +62,11 @@ int main(int argc, char **argv){
             int status;
             pid_t aux;
 
-            if (processos->prox != NULL)
-                if(waitpid(pid_group, &status, WNOHANG)==0)
-                    pid_group = processos->prox->pid;
-                else
-                    pid_group = 0; 
-            else 
+            if(waitpid(pid_group, &status, WNOHANG)==0)
+                pid_group = processos->prox->pid;
+            else
                 pid_group = 0;
+            
             aux = Vaccinated(command, qtdCommand, parameters, direcionaSaida, nameFile, pid_group, processos);
             switch (aux){
             case 1:
@@ -99,7 +97,6 @@ int main(int argc, char **argv){
                 direcionaSaida[0] = 0;
             }
         }
-        treatsSIGURS1(processos);
         updadeProcessList(processos);
         sleep(1);
     }
