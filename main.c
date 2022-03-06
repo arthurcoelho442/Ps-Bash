@@ -15,8 +15,8 @@ int main(int argc, char **argv){
     int qtdCommand, saveOut = dup(fileno(stdout));
     pid_t pid_group;
     char nameFile[100];
-    int direcionaSaida[1];
-    direcionaSaida[0] = 0;
+    int direcionaSaida[1];  
+    direcionaSaida[0] = 0;  
     process* processos = inicProcess(0,0);
     
     while(1){
@@ -39,7 +39,7 @@ int main(int argc, char **argv){
         /* Coloca temporariamente o grupo de vacinados em foreground e psh em Background, por 30 segundos */
         if(strcmp(command[0], "fg") == 0 &&  qtdCommand == 1){
             pshellBackground(processos);
-            qtdCommand = 0;
+            qtdCommand = 0; //Seta quantidade de comando para 0;
         }
 
         if (qtdCommand == 1){ // não vacinados
