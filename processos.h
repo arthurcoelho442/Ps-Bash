@@ -131,3 +131,4 @@ int notVaccinated(int* direcionaSaida, char* commad, char** parameters, char* na
 int Vaccinated(char **command, int qtdCommand, char **parameters, int *direcionaSaida, char *nameFile, pid_t pid_group, process *processos);
 
 #endif
+//Finalizado

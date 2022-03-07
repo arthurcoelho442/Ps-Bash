@@ -267,3 +267,4 @@ int Vaccinated(char **command, int qtdCommand, char **parameters, int *direciona
     sigprocmask(SIG_UNBLOCK, &newsigset, NULL);
     return pid_group;
 }
+//Finalizado
